@@ -1,13 +1,14 @@
 'use client'
 
+import { HomeOutlined } from '@ant-design/icons'
 import { Avatar, Card, Col, Flex, Image, Pagination, Row } from 'antd'
 import { useEffect, useState } from 'react'
 
 import Button from '~/components/common/Button'
 import Content from '~/components/common/Content'
 import Input from '~/components/common/Input'
-import Modal from '~/components/common/Modal'
 import useModal from '~/hook/useModal'
+import CreateRoom from './_component/CreateRoom'
 
 export default function Home() {
   const [loading, setLoading] = useState<boolean>(true)
@@ -16,17 +17,18 @@ export default function Home() {
   useEffect(() => {
     setTimeout(() => {
       setLoading(false)
-    }, 1000)
+    }, 100)
   }, [])
 
   return (
     <>
-      <Modal open={isOpen} title="Create room" onCancel={closeModal} width="768px">
-        <div>HELLLO</div>
-      </Modal>
+      <CreateRoom open={isOpen} handelClose={closeModal} />
       <Content
         layout="client"
         breadcrumb={[
+          {
+            title: <HomeOutlined />,
+          },
           {
             title: 'Home',
           },

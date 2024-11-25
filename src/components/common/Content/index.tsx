@@ -17,7 +17,11 @@ export default function Content({ children, breadcrumb, layout }: Props) {
 
   return (
     <>
-      <Breadcrumb style={{ margin: '16px 0' }} items={breadcrumb} />
+      <Breadcrumb
+        className="[&_.ant-breadcrumb-link]:font-bold breadcrumb-custom"
+        style={{ margin: '16px 0' }}
+        items={breadcrumb}
+      />
       <div
         className="p-4"
         style={{

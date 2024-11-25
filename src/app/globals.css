@@ -37,3 +37,9 @@
   background-color: #8888;
   cursor: pointer;
 }
+
+.breadcrumb-custom > ol {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}

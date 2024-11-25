@@ -4,6 +4,7 @@ import { AntdRegistry } from '@ant-design/nextjs-registry'
 import StyleProvider from '~/components/lib/StypeProvider'
 import './globals.css'
 import ReduxProvider from '~/lib/ReduxProvicer'
+import { open_sans, poppins } from '~/lib/fonts'
 
 const inter = Inter({ subsets: ['cyrillic-ext'] })
 
@@ -20,7 +21,7 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang={locale}>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${poppins.variable} ${open_sans.variable}`}>
         <ReduxProvider>
           <StyleProvider>
             <AntdRegistry>{children}</AntdRegistry>

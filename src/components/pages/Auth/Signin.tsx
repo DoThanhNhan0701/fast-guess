@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Form, message } from 'antd'
+import { useRouter } from 'next/navigation'
 import { useDispatch } from 'react-redux'
 
 import Button from '~/components/common/Button'
@@ -12,7 +13,6 @@ import { endpointAuth } from '~/services/endpoint'
 import { postRequest } from '~/services/request'
 import { actionLogin } from '~/store/slice/auth'
 import { Role } from '~/helper/enum/role'
-import { useRouter } from 'next/navigation'
 
 export default function Signin({ onChangeTab }: { onChangeTab: () => void }) {
   const router = useRouter()
