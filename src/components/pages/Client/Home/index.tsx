@@ -1,8 +1,9 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { HomeOutlined } from '@ant-design/icons'
 import { Avatar, Card, Col, Flex, Image, Pagination, Row } from 'antd'
-import { useEffect, useState } from 'react'
 
 import Button from '~/components/common/Button'
 import Content from '~/components/common/Content'
@@ -11,6 +12,7 @@ import useModal from '~/hook/useModal'
 import CreateRoom from './_component/CreateRoom'
 
 export default function Home() {
+  const router = useRouter()
   const [loading, setLoading] = useState<boolean>(true)
   const { isOpen, openModal, closeModal } = useModal()
 
@@ -35,7 +37,7 @@ export default function Home() {
         ]}
       >
         <Flex gap={12}>
-          <Input className="max-w-[400px] border-none" placeholder="Search" />
+          <Input className="max-w-[400px]" placeholder="Search" />
           <Button type="primary" onClick={openModal}>
             Create
           </Button>
@@ -43,7 +45,10 @@ export default function Home() {
         <Row gutter={[24, 24]} className="mt-4">
           {[0, 1, 2, 3, 4, 5, 6, 9].map((item, index) => (
             <Col key={index} span={6} xs={24} sm={12} md={12} lg={8} xl={6} xxl={6}>
-              <div className="p-1 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-xl transition ease-in-out delay-150 bg-blue-500 hover:-translate-y-1 hover:scale-100 duration-300">
+              <div
+                onClick={() => router.push(`/play-one-one/${index}`)}
+                className="cursor-pointer p-1 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-xl transition ease-in-out delay-150 bg-blue-500 hover:-translate-y-1 hover:scale-100 duration-300"
+              >
                 <Card className="border-none rounded-lg" loading={loading}>
                   <Card.Meta
                     avatar={

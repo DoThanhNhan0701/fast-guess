@@ -1,6 +1,5 @@
 'use client'
 
-import { PieChartOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons'
 import { Layout, Menu, MenuProps, Popover } from 'antd'
 import { ReactNode } from 'react'
 
@@ -8,27 +7,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import { FaRegUser } from 'react-icons/fa'
 
 const { Header, Content, Footer } = Layout
-
-type MenuItem = Required<MenuProps>['items'][number]
-
-function getItem(
-  label: React.ReactNode,
-  key: React.Key,
-  icon?: React.ReactNode,
-  children?: MenuItem[],
-): MenuItem {
-  return {
-    key,
-    icon,
-    children,
-    label,
-  } as MenuItem
-}
-
-const items: MenuItem[] = [
-  getItem('Topics', '/', <PieChartOutlined />),
-  getItem('Settings', 'settings', <SettingOutlined />),
-]
 
 export default function PrivateClientLayout({ children }: { children: ReactNode }) {
   const router = useRouter()
@@ -63,7 +41,7 @@ export default function PrivateClientLayout({ children }: { children: ReactNode 
           mode="horizontal"
           defaultSelectedKeys={[pathname.replace('/', '')]}
           selectedKeys={[pathname.replace('/', '')]}
-          items={items}
+          items={[]}
           style={{ flex: 1, minWidth: 0 }}
           onClick={(info) => {
             router.push(`/${info.key}`)
