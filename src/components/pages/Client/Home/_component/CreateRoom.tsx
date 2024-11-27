@@ -1,4 +1,5 @@
-import { Flex, Image, Input } from 'antd'
+import { Flex, Image, Input, message } from 'antd'
+import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
 import { FaPlus } from 'react-icons/fa'
 import { TiTick } from 'react-icons/ti'
@@ -14,8 +15,11 @@ interface Props {
 }
 
 export default function CreateRoom({ open, handelClose }: Props) {
+  const router = useRouter()
   const { isOpen, closeModal, openModal } = useModal()
   const [listTopic, setListTopic] = useState<number[]>([])
+  const [selectedModel, setSelectedModel] = useState<'1 VS 1' | 'GK'>('1 VS 1')
+  const [timeOut, setTimeOut] = useState<string>('')
 
   // State for selected topics
   const [selectedYourTopics, setSelectedYourTopics] = useState<number[]>([])
@@ -143,7 +147,8 @@ export default function CreateRoom({ open, handelClose }: Props) {
           <div className="flex justify-center flex-col items-center">
             <p className="text-2xl font-bold">Model</p>
             <Select
-              defaultValue={['1 VS 1']}
+              onChange={(e) => setSelectedModel(e)}
+              defaultValue={[selectedModel]}
               className="w-[100px] h-[40px] [&_.ant-select-selector]:border-[2px] [&_.ant-select-selector]:border-[#000] [&_.ant-select-selection-item]:!font-bold"
               options={[
                 {
@@ -160,6 +165,8 @@ export default function CreateRoom({ open, handelClose }: Props) {
           <div className="flex justify-center flex-col items-center">
             <p className="text-2xl font-bold">Time</p>
             <Input
+              value={timeOut}
+              onChange={(e) => setTimeOut(e.target.value)}
               placeholder="Time"
               className="w-[100px] h-[40px] !border-[2px] !border-[#000] !font-bold"
             />
@@ -170,7 +177,25 @@ export default function CreateRoom({ open, handelClose }: Props) {
           <Button onClick={handelClose} className="w-full mt-6" type="default">
             Cancel
           </Button>
-          <Button className="w-full mt-6" type="primary">
+          <Button
+            onClick={() => {
+              if ((timeOut !== '' && selectedYourTopics.length) || selectedSuggestTopics.length) {
+                router.push(
+                  `${selectedModel === '1 VS 1' ? '/waiting/one-and-one' : '/waiting/one-and-gk'}`,
+                )
+              } else {
+                if (timeOut === '') {
+                  message.warning('Please input time')
+                } else if (!selectedYourTopics.length || !selectedSuggestTopics.length) {
+                  message.warning('Please select topic')
+                } else {
+                  message.error('Error')
+                }
+              }
+            }}
+            className="w-full mt-6"
+            type="primary"
+          >
             Create
           </Button>
         </Flex>

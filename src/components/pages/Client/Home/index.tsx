@@ -46,7 +46,11 @@ export default function Home() {
           {[0, 1, 2, 3, 4, 5, 6, 9].map((item, index) => (
             <Col key={index} span={6} xs={24} sm={12} md={12} lg={8} xl={6} xxl={6}>
               <div
-                onClick={() => router.push(`/play-one-one/${index}`)}
+                onClick={() =>
+                  router.push(
+                    `${index % 2 === 0 ? `/play-one-one/${index}` : `/play-one-gk/${index}`}`,
+                  )
+                }
                 className="cursor-pointer p-1 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-xl transition ease-in-out delay-150 bg-blue-500 hover:-translate-y-1 hover:scale-100 duration-300"
               >
                 <Card className="border-none rounded-lg" loading={loading}>
@@ -59,7 +63,7 @@ export default function Home() {
                     description={
                       <>
                         <Image
-                          preview={true}
+                          preview={false}
                           className="rounded-xl object-cover"
                           width={150}
                           height={150}
@@ -67,16 +71,18 @@ export default function Home() {
                         />
                         <Row>
                           <Col span={12}>
-                            <p>{`Topic: ${item}`}</p>
+                            <p className="text-base font-bold text-slate-800">{`Topic: ${item}`}</p>
                           </Col>
                           <Col span={12}>
-                            <p>{`Time: ${item}`}</p>
+                            <p className="text-base font-bold text-slate-800">{`Time: ${item}`}</p>
                           </Col>
                           <Col span={12}>
-                            <p>{`Mode: ${item}`}</p>
+                            <p className="text-base font-bold text-slate-800">{`Mode: ${
+                              index % 2 === 0 ? '1 VS 1' : 'GK'
+                            }`}</p>
                           </Col>
                           <Col span={12}>
-                            <p>{`Player: ${item}`}</p>
+                            <p className="text-base font-bold text-slate-800">{`Player: ${item}`}</p>
                           </Col>
                         </Row>
                       </>

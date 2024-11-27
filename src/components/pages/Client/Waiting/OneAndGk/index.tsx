@@ -1,3 +1,6 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
 import { Col, Flex, Image, Row } from 'antd'
 import { HomeOutlined, SettingOutlined } from '@ant-design/icons'
 import { FaLongArrowAltLeft, FaLongArrowAltRight } from 'react-icons/fa'
@@ -5,7 +8,9 @@ import { FaLongArrowAltLeft, FaLongArrowAltRight } from 'react-icons/fa'
 import Button from '~/components/common/Button'
 import Content from '~/components/common/Content'
 
-export default function Watting() {
+export default function WattingOneAndGk() {
+  const router = useRouter()
+
   return (
     <Content
       layout="client"
@@ -14,7 +19,7 @@ export default function Watting() {
           title: <HomeOutlined />,
         },
         {
-          title: 'Watting',
+          title: 'Watting One and Gk',
         },
       ]}
     >
@@ -23,12 +28,7 @@ export default function Watting() {
         <SettingOutlined className="text-2xl" />
       </Flex>
 
-      <Row
-        style={{
-          minHeight: 'calc(100vh - 293px)',
-        }}
-        align={'middle'}
-      >
+      <Row align={'middle'} className="justify-center">
         <Col
           span={5}
           className="flex items-center justify-center flex-col gap-2 border-[2px] p-6 max-w-[200px] rounded-2xl"
@@ -37,7 +37,7 @@ export default function Watting() {
             width={74}
             preview={false}
             className="rounded-xl"
-            src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6cKUAR9yP4Nm-uQ7PXr4WUnkKURR7HaJ5Cw&s"
           />
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">
             Name 1
@@ -55,7 +55,7 @@ export default function Watting() {
               width={200}
               preview={false}
               className="rounded-xl"
-              src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
+              src="https://t3.ftcdn.net/jpg/04/17/61/90/360_F_417619090_iVZEF560PanNYbGrgzcb0P9gYhyXFX2o.jpg"
             />
             <div className="py-[10px]">
               <p className="text-2xl font-extrabold">{`Topic name`}</p>
@@ -75,19 +75,36 @@ export default function Watting() {
             width={74}
             preview={false}
             className="rounded-xl"
-            src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6cKUAR9yP4Nm-uQ7PXr4WUnkKURR7HaJ5Cw&s"
           />
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl">
             Name 1
           </p>
         </Col>
       </Row>
+      {/* GK */}
+      <div className="w-full flex justify-center py-6">
+        <div className="min-w-[200px] flex items-center justify-center flex-col gap-2 border-[2px] p-6 max-w-[200px] rounded-2xl">
+          <Image
+            width={74}
+            preview={false}
+            className="rounded-xl"
+            src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
+          />
+          <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl">GK</p>
+        </div>
+      </div>
+      {/* Btn */}
       <div className="max-w-[700px] m-auto">
         <Flex className="gap-6">
-          <Button className="w-full" type="default">
+          <Button
+            onClick={() => router.push(`/play-one-gk/${100}`)}
+            className="w-full"
+            type="default"
+          >
             Play
           </Button>
-          <Button className="w-full" type="primary">
+          <Button onClick={() => router.push(`/home`)} className="w-full" type="primary">
             Quit
           </Button>
         </Flex>
