@@ -44,8 +44,8 @@ export default function PlayOneGk() {
 
         <Col span={14} className="flex items-center justify-center">
           {/* Topic */}
-          <FaLongArrowAltLeft className="text-3xl" />
-          <div>-----------------------</div>
+          <FaLongArrowAltLeft className="text-3xl text-[#15683b]" />
+          <div className="font-extrabold text-[#15683b]">-----------------------</div>
           <div
             className={`min-w-[320px] p-5 relative border-[2px] border-[rgb(96,_11,_118)] rounded-2xl cursor-pointer text-center`}
           >
@@ -81,12 +81,15 @@ export default function PlayOneGk() {
 
       <Row align={'middle'} gutter={36} className="justify-center max-w-[80%] !m-auto">
         <Col span={5} className="flex items-center justify-center flex-col gap-2 ">
-          <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">60</p>
+          <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">45</p>
         </Col>
         <Col span={14} className="flex items-center justify-center">
-          <FaLongArrowAltLeft className="text-3xl" />
+          <FaLongArrowAltLeft className="text-3xl text-[#15683b]" />
           <div>--</div>
-          <Input className="h-[100px] border-[2px] border-[#000] text-6xl font-extrabold leading-[60px] text-center" />
+          <Input
+            value={'Con chuột'}
+            className="h-[100px] border-[2px] border-[#000] text-6xl font-extrabold leading-[60px] text-center"
+          />
           <div>--</div>
           <FaLongArrowAltRight className="text-3xl" />
         </Col>
@@ -95,9 +98,9 @@ export default function PlayOneGk() {
         </Col>
       </Row>
       {/* --- */}
-      <div className="max-w-[40%] !m-auto">
+      {/* <div className="max-w-[40%] !m-auto">
         <Input className="h-[100px] border-[2px] border-[#000] text-6xl font-extrabold leading-[60px] text-center mt-6" />
-      </div>
+      </div> */}
       {/* --- */}
       <div className="max-w-[40%] m-auto">
         <Flex className="gap-6 mt-10">

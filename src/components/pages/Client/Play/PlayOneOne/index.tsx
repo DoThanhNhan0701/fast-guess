@@ -44,8 +44,8 @@ export default function PlayOneOne() {
 
         <Col span={14} className="flex items-center justify-center">
           {/* Topic */}
-          <FaLongArrowAltLeft className="text-3xl" />
-          <div>-----------------------</div>
+          <FaLongArrowAltLeft className="text-3xl text-[#15683b]" />
+          <div className="text-[#15683b] font-extrabold">-----------------------</div>
           <div
             className={`min-w-[320px] p-5 relative border-[2px] border-[rgb(96,_11,_118)] rounded-2xl cursor-pointer text-center`}
           >
@@ -81,10 +81,10 @@ export default function PlayOneOne() {
 
       <Row align={'middle'} gutter={36} className="justify-center max-w-[80%] !m-auto">
         <Col span={5} className="flex items-center justify-center flex-col gap-2 ">
-          <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">60</p>
+          <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">55</p>
         </Col>
         <Col span={14} className="flex items-center justify-center">
-          <FaLongArrowAltLeft className="text-3xl" />
+          <FaLongArrowAltLeft className="text-3xl text-[#15683b]" />
           <div>--</div>
           <Input className="h-[100px] border-[2px] border-[#000] text-6xl font-extrabold leading-[60px] text-center" />
           <div>--</div>
