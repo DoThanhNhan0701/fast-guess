@@ -1,7 +1,7 @@
 'use client'
 
 import { HomeOutlined } from '@ant-design/icons'
-import { Flex, Image, Modal } from 'antd'
+import { Flex, Image } from 'antd'
 import { FaPlus, FaRegTrashAlt } from 'react-icons/fa'
 import Content from '~/components/common/Content'
 import useModal from '~/hook/useModal'
