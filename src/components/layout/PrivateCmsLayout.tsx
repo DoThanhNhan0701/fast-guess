@@ -72,13 +72,13 @@ export default function PrivateCmsLayout({ children }: { children: ReactNode }) 
               size="large"
               gap={4}
             >
-              DoThanhNhan
+              NguyenHoangLinh
             </Avatar>
           </Flex>
         </Header>
         <Content style={{ margin: '0 16px' }}>{children}</Content>
         <Footer style={{ textAlign: 'center' }}>
-          Nhan ©{new Date().getFullYear()} Created by TNhan
+          Nhan ©{new Date().getFullYear()} Created by LinhNG
         </Footer>
       </Layout>
     </Layout>

@@ -55,7 +55,7 @@ export default function PrivateClientLayout({ children }: { children: ReactNode 
             placement="bottomRight"
           >
             <div className="flex items-center gap-1 h-[41px]">
-              <p className="text-white">DoThanhNhan</p>
+              <p className="text-white">NguyenHoangLinh</p>
               <FaRegUser color="#fff" size="16px" />
             </div>
           </Popover>
@@ -63,7 +63,7 @@ export default function PrivateClientLayout({ children }: { children: ReactNode 
       </Header>
       <Content style={{ padding: '0 16px' }}>{children}</Content>
       <Footer style={{ textAlign: 'center' }}>
-        Nhan ©{new Date().getFullYear()} Created by TNhan
+        Nhan ©{new Date().getFullYear()} Created by LinhNG
       </Footer>
     </Layout>
   )
