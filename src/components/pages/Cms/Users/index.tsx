@@ -1,95 +1,53 @@
 'use client'
 
-import { Space, Table, TableProps, Tag } from 'antd'
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
+import { Button, Space, Table, TableProps, Tag } from 'antd'
+import { useState } from 'react'
 import Content from '~/components/common/Content'
 
 export default function Users() {
-  interface DataType {
-    key: string
-    name: string
-    age: number
-    address: string
-    tags: string[]
+  interface User {
+    id: number
+    username: string
+    email: string
   }
 
-  const columns: TableProps<DataType>['columns'] = [
+  const columns = [
     {
-      title: 'Name',
-      dataIndex: 'name',
-      align: 'center',
-      key: 'name',
-      render: (text) => <a>{text}</a>,
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
     },
     {
-      title: 'Age',
-      dataIndex: 'age',
-      align: 'center',
-      key: 'age',
+      title: 'Username',
+      dataIndex: 'username',
+      key: 'username',
     },
     {
-      title: 'Address',
-      align: 'center',
-      dataIndex: 'address',
-      key: 'address',
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
     },
     {
-      title: 'Tags',
-      key: 'tags',
-      align: 'center',
-      dataIndex: 'tags',
-      render: (_, { tags }) => (
-        <>
-          {tags.map((tag) => {
-            let color = tag.length > 5 ? 'geekblue' : 'green'
-            if (tag === 'loser') {
-              color = 'volcano'
-            }
-            return (
-              <Tag color={color} key={tag}>
-                {tag.toUpperCase()}
-              </Tag>
-            )
-          })}
-        </>
-      ),
-    },
-    {
-      title: 'Action',
-      key: 'action',
-      align: 'center',
-      render: (_, record) => (
+      title: 'Actions',
+      key: 'actions',
+      render: (text: string, record: User) => (
         <Space size="middle">
-          <a>Setting</a>
-          <a>Update</a>
-          <a>Delete</a>
+          <Button icon={<EditOutlined />} type="link" />
+          <Button icon={<DeleteOutlined />} type="link" danger />
         </Space>
       ),
     },
   ]
 
-  const data: DataType[] = [
-    {
-      key: '1',
-      name: 'John Brown',
-      age: 32,
-      address: 'New York No. 1 Lake Park',
-      tags: ['nice', 'developer'],
-    },
-    {
-      key: '2',
-      name: 'Jim Green',
-      age: 42,
-      address: 'London No. 1 Lake Park',
-      tags: ['loser'],
-    },
-    {
-      key: '3',
-      name: 'Joe Black',
-      age: 32,
-      address: 'Sydney No. 1 Lake Park',
-      tags: ['cool', 'teacher'],
-    },
-  ]
+  const [users, _] = useState<User[]>([
+    { id: 1, username: 'JohnDoe', email: 'john.doe@example.com' },
+    { id: 2, username: 'JaneSmith', email: 'jane.smith@example.com' },
+    { id: 3, username: 'JaneSmith1', email: 'jane.smith@example.com' },
+    { id: 4, username: 'JaneSmith3', email: 'jane.smith@example.com' },
+    { id: 5, username: 'JaneSmith2', email: 'jane.smith@example.com' },
+    { id: 6, username: 'JaneSmith5', email: 'jane.smith@example.com' },
+  ])
 
   return (
     <>
@@ -105,7 +63,9 @@ export default function Users() {
           },
         ]}
       >
-        <Table<DataType> columns={columns} dataSource={data} pagination={false} />
+        <div style={{ padding: 20 }}>
+          <Table dataSource={users} columns={columns} rowKey="id" bordered />
+        </div>
       </Content>
     </>
   )
