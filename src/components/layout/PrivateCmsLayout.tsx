@@ -79,7 +79,7 @@ export default function PrivateCmsLayout({ children }: { children: ReactNode }) 
         </Header>
         <Content style={{ margin: '0 16px' }}>{children}</Content>
         <Footer style={{ textAlign: 'center' }}>
-          Nhan ©{new Date().getFullYear()} Created by LinhNG
+          Fast guess ©{new Date().getFullYear()} Created by LinhNG
         </Footer>
       </Layout>
     </Layout>

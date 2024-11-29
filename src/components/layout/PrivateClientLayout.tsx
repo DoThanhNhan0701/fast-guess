@@ -1,13 +1,32 @@
 'use client'
 
 import Image from 'next/image'
-import { Layout, Menu, Popover } from 'antd'
+import { Layout, Menu, MenuProps, Popover } from 'antd'
 import { ReactNode } from 'react'
 
 import { usePathname, useRouter } from 'next/navigation'
 import { FaRegUser } from 'react-icons/fa'
+import { FaRankingStar } from 'react-icons/fa6'
 
 const { Header, Content, Footer } = Layout
+
+type MenuItem = Required<MenuProps>['items'][number]
+
+function getItem(
+  label: React.ReactNode,
+  key: React.Key,
+  icon?: React.ReactNode,
+  children?: MenuItem[],
+): MenuItem {
+  return {
+    key,
+    icon,
+    children,
+    label,
+  } as MenuItem
+}
+
+const items: MenuItem[] = [getItem('Ranking', 'ranking', <FaRankingStar />)]
 
 export default function PrivateClientLayout({ children }: { children: ReactNode }) {
   const router = useRouter()
@@ -42,7 +61,7 @@ export default function PrivateClientLayout({ children }: { children: ReactNode 
           mode="horizontal"
           defaultSelectedKeys={[pathname.replace('/', '')]}
           selectedKeys={[pathname.replace('/', '')]}
-          items={[]}
+          items={items}
           style={{ flex: 1, minWidth: 0 }}
           onClick={(info) => {
             router.push(`/${info.key}`)
@@ -64,7 +83,7 @@ export default function PrivateClientLayout({ children }: { children: ReactNode 
       </Header>
       <Content style={{ padding: '0 16px' }}>{children}</Content>
       <Footer style={{ textAlign: 'center' }}>
-        Nhan ©{new Date().getFullYear()} Created by LinhNG
+        Fast guess ©{new Date().getFullYear()} Created by LinhNG
       </Footer>
     </Layout>
   )

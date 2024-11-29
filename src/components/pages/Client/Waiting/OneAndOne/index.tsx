@@ -46,7 +46,7 @@ export default function WattingOneAndOne() {
             src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
           />
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">
-            Name 1
+            Player 1
           </p>
         </Col>
 
@@ -59,12 +59,13 @@ export default function WattingOneAndOne() {
           >
             <Image
               width={200}
+              height={200}
               preview={false}
-              className="rounded-xl"
-              src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
+              className="rounded-xl object-cover"
+              src="https://motherspet.com/blogs/wp-content/webp-express/webp-images/uploads/2024/07/100-wild-animals-870x490.jpg.webp"
             />
             <div className="py-[10px]">
-              <p className="text-2xl font-extrabold">{`Topic name`}</p>
+              <p className="text-2xl font-extrabold">{`Animal`}</p>
               <p className="text-sm font-bold">300 Image</p>
             </div>
           </div>
@@ -79,12 +80,13 @@ export default function WattingOneAndOne() {
         >
           <Image
             width={74}
+            height={74}
             preview={false}
             className="rounded-xl"
-            src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
+            src="https://cdn-icons-png.flaticon.com/512/5726/5726775.png"
           />
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl">
-            Name 1
+            Player 2
           </p>
         </Col>
       </Row>
