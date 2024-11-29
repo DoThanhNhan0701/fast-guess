@@ -7,6 +7,9 @@ import { ReactNode } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { FaRegUser } from 'react-icons/fa'
 import { FaRankingStar } from 'react-icons/fa6'
+import { useDispatch, useSelector } from 'react-redux'
+import { RootState } from '~/store'
+import { actionLogout } from '~/store/slice/auth'
 
 const { Header, Content, Footer } = Layout
 
@@ -29,14 +32,16 @@ function getItem(
 const items: MenuItem[] = [getItem('Ranking', 'ranking', <FaRankingStar />)]
 
 export default function PrivateClientLayout({ children }: { children: ReactNode }) {
+  const { userInfo } = useSelector((state: RootState) => state.auth)
+  const dispatch = useDispatch()
+
   const router = useRouter()
   const pathname = usePathname()
 
-  const title = (
-    <div onClick={() => router.push('/settings')} className="cursor-pointer">
-      Setting
-    </div>
-  )
+  const handleLogout = () => {
+    dispatch(actionLogout())
+    router.replace('/auth')
+  }
 
   return (
     <Layout className="min-h-[100vh]">
@@ -69,13 +74,25 @@ export default function PrivateClientLayout({ children }: { children: ReactNode 
         />
         <div className="border-[2px] rounded-3xl px-3 h-[45px] cursor-pointer">
           <Popover
-            title={title}
+            title={
+              <div>
+                <div
+                  onClick={() => router.push('/settings')}
+                  className="cursor-pointer py-2 hover:bg-slate-100 px-1"
+                >
+                  Setting
+                </div>
+                <div onClick={handleLogout} className="cursor-pointer py-2 hover:bg-slate-100 px-1">
+                  Logout
+                </div>
+              </div>
+            }
             rootClassName="[&_.ant-popover-title]:!mb-0"
             trigger={['click']}
             placement="bottomRight"
           >
             <div className="flex items-center gap-1 h-[41px]">
-              <p className="text-white">NguyenHoangLinh</p>
+              <p className="text-white">{userInfo?.email}</p>
               <FaRegUser color="#fff" size="16px" />
             </div>
           </Popover>

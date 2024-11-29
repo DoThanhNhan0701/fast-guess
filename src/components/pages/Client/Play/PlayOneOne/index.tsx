@@ -1,16 +1,45 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { Col, Flex, Image, Row } from 'antd'
+import { useLayoutEffect, useState } from 'react'
+import { useWebSocket } from '~/hook/useWebSocket'
+import { usePathname, useRouter } from 'next/navigation'
+import { Col, Flex, Image, message, Row } from 'antd'
 import { HomeOutlined, SettingOutlined } from '@ant-design/icons'
 import { FaLongArrowAltLeft, FaLongArrowAltRight } from 'react-icons/fa'
+import { accessToken, domainSocket } from '~/helper/contant'
 
 import Button from '~/components/common/Button'
 import Content from '~/components/common/Content'
 import Input from '~/components/common/Input'
+import { useSelector } from 'react-redux'
+import { RootState } from '~/store'
 
 export default function PlayOneOne() {
   const router = useRouter()
+  const pathName = usePathname()
+  const roomID = pathName.split('/')[2]
+  const wsUrl = `ws://${new URL(domainSocket ?? '').host}/ws/game/${roomID}/?token=${accessToken}`
+  const { userInfo } = useSelector((state: RootState) => state.auth)
+  const { isConnected, messages, sendMessage } = useWebSocket(wsUrl)
+
+  const [namePlayer, setNamePlayer] = useState({
+    name1: messages?.players?.[0] ?? '',
+    name2: messages?.players?.[1] ?? '',
+  })
+
+  useLayoutEffect(() => {
+    if (isConnected) {
+      if (messages?.message) message.success(messages.message)
+      const timeoutId = setTimeout(() => {
+        setNamePlayer({
+          name1: messages?.players?.[0] ?? '',
+          name2: messages?.players?.[1] ?? '',
+        })
+      }, 3000)
+
+      return () => clearTimeout(timeoutId)
+    }
+  }, [isConnected, messages?.players, messages])
 
   return (
     <Content
@@ -43,7 +72,7 @@ export default function PlayOneOne() {
             src="https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg"
           />
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">
-            LinhNG
+            {namePlayer.name1 || userInfo?.email?.split('@')[0]}
           </p>
         </Col>
 
@@ -79,7 +108,7 @@ export default function PlayOneOne() {
             src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDso3YjdjeD_8tA6vVacoI3ogd6YqF-VfyGiylBV2v6-zitJretXOtsLvJ5UZDrlNs7nc&usqp=CAU"
           />
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl">
-            NhanDT
+            {messages?.players?.[0] || 'Duyluan2'}
           </p>
         </Col>
       </Row>

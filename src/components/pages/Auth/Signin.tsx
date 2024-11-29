@@ -12,7 +12,6 @@ import InputPassword from '~/components/common/InputPassword'
 import { endpointAuth } from '~/services/endpoint'
 import { postRequest } from '~/services/request'
 import { actionLogin } from '~/store/slice/auth'
-import { Role } from '~/helper/enum/role'
 
 export default function Signin({ onChangeTab }: { onChangeTab: () => void }) {
   const router = useRouter()
@@ -24,35 +23,26 @@ export default function Signin({ onChangeTab }: { onChangeTab: () => void }) {
     setLoading(true)
     postRequest(endpointAuth.LOGIN, {
       data: {
-        account: values.email,
+        username: values.username,
         password: values.password,
       },
     })
       .then((res: any) => {
-        if (res.user.role === Role.STUDENT) {
-          message.error('Invalid account')
-          return
-        }
         dispatch(
           actionLogin({
             refresh: res.refresh,
             access: res.access,
             userInfo: {
-              id: res.user.id,
-              is_active: res.user.is_active,
-              is_staff: res.user.is_staff,
-              is_superuser: res.user.is_superuser,
-              language: res.user.language,
-              account: res.user.account,
-              last_login: res.user.last_login,
-              name: res.user.name,
-              role: res.user.role,
-              surname: res.user.surname,
+              pk: res.user.pk,
+              email: res.user.email,
+              first_name: res.user.first_name,
+              last_name: res.user.last_name,
+              username: res.user.username,
             },
           }),
         )
         message.success('Login successfully')
-        router.push('/topics')
+        router.push('/home')
         setLoading(false)
       })
       .catch(() => {
@@ -70,25 +60,14 @@ export default function Signin({ onChangeTab }: { onChangeTab: () => void }) {
       <Form
         form={formLogin}
         initialValues={{
-          email: '',
+          username: '',
           password: '',
         }}
         onFinish={onFinish}
         className="mt-4 mx-auto max-w-md"
       >
-        <Form.Item
-          name={'email'}
-          validateFirst
-          rules={[
-            {
-              required: true,
-            },
-            {
-              type: 'email',
-            },
-          ]}
-        >
-          <Input placeholder="Email" size="large" />
+        <Form.Item name={'username'} validateFirst>
+          <Input placeholder="Username" size="large" />
         </Form.Item>
         <Form.Item
           name={'password'}

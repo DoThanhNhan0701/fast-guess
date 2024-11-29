@@ -10,7 +10,7 @@ const endpointAuth = {
 
 const endpointBase = {
   USER: `${prefixBase}/user`,
-  GET_ME: `${prefixBase}/user/me/`,
+  GET_ME: `${prefixBase}/auth/user/`,
   TEACHER_UPDATE: `${prefixBase}/teacher/update/`,
   CLASSROOM: `${prefixBase}/classroom`,
   GROUP: `${prefixBase}/group`,

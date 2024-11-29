@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import { ReactNode, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { Role } from '~/helper/enum/role'
 import { endpointBase } from '~/services/endpoint'
 import { getRequest } from '~/services/request'
 import { REFRESH_TOKEN } from '~/settings/constants'
@@ -22,9 +21,10 @@ export default function App({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const refreshToken = webStorageClient.get(REFRESH_TOKEN)
-    if (!refreshToken || (userInfo?.id && userInfo?.role !== Role.TEACHER)) {
-      // router.replace('/auth')
-    } else if (!userInfo?.id) {
+
+    if (!refreshToken) {
+      router.replace('/auth')
+    } else if (!userInfo?.pk) {
       getMe()
     } else {
       setReady(true)

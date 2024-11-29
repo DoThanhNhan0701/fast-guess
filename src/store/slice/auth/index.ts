@@ -1,19 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { Role } from '~/helper/enum/role'
 import { REFRESH_TOKEN } from '~/settings/constants'
 import webStorage from '~/utils/webStorageClient'
 
 interface User {
-  id: string
-  is_active: boolean
-  is_staff: boolean
-  is_superuser: boolean
-  language: string
-  account: string
-  last_login: any
-  name: string
-  role: Role
-  surname: string
+  pk: string
+  username: string
+  email: string
+  first_name: string
+  last_name: string
 }
 
 export interface AuthInterface {
