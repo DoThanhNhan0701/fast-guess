@@ -1,11 +1,11 @@
 'use client'
 
-import { Layout, Menu, MenuProps, Popover } from 'antd'
+import Image from 'next/image'
+import { Layout, Menu, Popover } from 'antd'
 import { ReactNode } from 'react'
 
 import { usePathname, useRouter } from 'next/navigation'
 import { FaRegUser } from 'react-icons/fa'
-import Image from 'next/image'
 
 const { Header, Content, Footer } = Layout
 

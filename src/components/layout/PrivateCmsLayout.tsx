@@ -1,11 +1,11 @@
 'use client'
 
+import Image from 'next/image'
 import { PieChartOutlined, UserOutlined } from '@ant-design/icons'
 import { Avatar, Flex, Layout, Menu, MenuProps, theme } from 'antd'
 import { ReactNode, useState } from 'react'
 
 import { usePathname, useRouter } from 'next/navigation'
-import Image from 'next/image'
 
 const { Header, Content, Footer, Sider } = Layout
 
