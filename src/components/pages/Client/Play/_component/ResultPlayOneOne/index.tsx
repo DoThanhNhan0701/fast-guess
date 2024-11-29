@@ -7,7 +7,7 @@ import { HomeOutlined } from '@ant-design/icons'
 import Button from '~/components/common/Button'
 import Content from '~/components/common/Content'
 
-export default function ResultPlayOneGk() {
+export default function ResultPlayOneOne() {
   const router = useRouter()
 
   return (

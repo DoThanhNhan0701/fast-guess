@@ -1,3 +1,6 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
 import { Col, Flex, Image, Row } from 'antd'
 import { HomeOutlined, SettingOutlined } from '@ant-design/icons'
 import { FaLongArrowAltLeft, FaLongArrowAltRight } from 'react-icons/fa'
@@ -7,6 +10,8 @@ import Content from '~/components/common/Content'
 import Input from '~/components/common/Input'
 
 export default function PlayOneGk() {
+  const router = useRouter()
+
   return (
     <Content
       layout="client"
@@ -111,7 +116,11 @@ export default function PlayOneGk() {
             Wrong
           </Button>
         </Flex>
-        <Button className="w-full mt-6" type="primary">
+        <Button
+          onClick={() => router.push('/play-one-gk/4/result')}
+          className="w-full mt-6"
+          type="primary"
+        >
           Next
         </Button>
       </div>
