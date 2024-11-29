@@ -1,11 +1,15 @@
 'use client'
 
 import { PieChartOutlined, UserOutlined } from '@ant-design/icons'
-import { Avatar, Flex, Layout, Menu, MenuProps, theme } from 'antd'
+import { Flex, Layout, Menu, MenuProps, Popover, theme } from 'antd'
 import Image from 'next/image'
 import { ReactNode, useState } from 'react'
 
 import { usePathname, useRouter } from 'next/navigation'
+import { FaRegUser } from 'react-icons/fa'
+import { useDispatch, useSelector } from 'react-redux'
+import { RootState } from '~/store'
+import { actionLogout } from '~/store/slice/auth'
 
 const { Header, Content, Footer, Sider } = Layout
 
@@ -31,13 +35,21 @@ const items: MenuItem[] = [
 ]
 
 export default function PrivateCmsLayout({ children }: { children: ReactNode }) {
+  const { userInfo } = useSelector((state: RootState) => state.auth)
+
   const router = useRouter()
   const pathname = usePathname()
+  const dispatch = useDispatch()
 
   const [collapsed, setCollapsed] = useState(false)
   const {
     token: { colorBgContainer },
   } = theme.useToken()
+
+  const handleLogout = () => {
+    dispatch(actionLogout())
+    router.replace('/auth')
+  }
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -69,13 +81,28 @@ export default function PrivateCmsLayout({ children }: { children: ReactNode }) 
           style={{ padding: '10px 20px', background: colorBgContainer }}
         >
           <Flex justify="end">
-            <Avatar
-              style={{ backgroundColor: '#f56a00', verticalAlign: 'middle' }}
-              size="large"
-              gap={4}
-            >
-              NguyenHoangLinh
-            </Avatar>
+            <div className="border-[2px] rounded-3xl px-3 h-[45px] cursor-pointer">
+              <Popover
+                title={
+                  <div>
+                    <div
+                      onClick={handleLogout}
+                      className="cursor-pointer py-2 hover:bg-slate-100 px-1 t!ext-black"
+                    >
+                      Logout
+                    </div>
+                  </div>
+                }
+                rootClassName="[&_.ant-popover-title]:!mb-0"
+                trigger={['click']}
+                placement="bottomRight"
+              >
+                <div className="flex items-center gap-1 h-[41px]">
+                  <p className="text-black">{userInfo?.email}</p>
+                  <FaRegUser color="#000" size="16px" />
+                </div>
+              </Popover>
+            </div>
           </Flex>
         </Header>
         <Content style={{ margin: '0 16px' }}>{children}</Content>
