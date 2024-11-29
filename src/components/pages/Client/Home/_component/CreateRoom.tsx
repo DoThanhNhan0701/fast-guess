@@ -1,35 +1,45 @@
 import { Flex, Image, Input, message } from 'antd'
-import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { FaPlus } from 'react-icons/fa'
 import { TiTick } from 'react-icons/ti'
 
 import Button from '~/components/common/Button'
 import Modal from '~/components/common/Modal'
-import Select from '~/components/common/Select'
 import useModal from '~/hook/useModal'
+import { endpointBase } from '~/services/endpoint'
+import { getRequest, postRequest } from '~/services/request'
+import { Topic } from '../../Setting'
 
 interface Props {
   open: boolean
   handelClose: () => void
+  renderUI: () => void
 }
 
-export default function CreateRoom({ open, handelClose }: Props) {
-  const router = useRouter()
+export default function CreateRoom({ open, handelClose, renderUI }: Props) {
   const { isOpen, closeModal, openModal } = useModal()
-  const [listTopic, setListTopic] = useState<number[]>([])
-  const [selectedModel, setSelectedModel] = useState<'1 VS 1' | 'GK'>('1 VS 1')
+  const [listTopic, setListTopic] = useState<Topic[]>([])
   const [timeOut, setTimeOut] = useState<string>('')
 
-  // State for selected topics
-  const [selectedYourTopics, setSelectedYourTopics] = useState<number[]>([])
-  const [selectedSuggestTopics, setSelectedSuggestTopics] = useState<number[]>([])
+  const [listTopicId, setListTopicId] = useState<string[]>([])
+  const [selectedYourTopics, setSelectedYourTopics] = useState<string[]>([])
 
-  // Function to toggle topic selection
+  useEffect(() => {
+    getRequest(endpointBase.TOPIC, {
+      params: {
+        category: 'user',
+      },
+    })
+      .then((res: any) => {
+        setListTopic(res || [])
+      })
+      .catch(() => {})
+  }, [])
+
   const handleSelection = (
-    topicId: number,
-    setState: React.Dispatch<React.SetStateAction<number[]>>,
-    state: number[],
+    topicId: string,
+    setState: React.Dispatch<React.SetStateAction<string[]>>,
+    state: string[],
   ) => {
     if (state.includes(topicId)) {
       setState(state.filter((id) => id !== topicId))
@@ -39,8 +49,27 @@ export default function CreateRoom({ open, handelClose }: Props) {
   }
 
   const handleCreateTopic = () => {
-    setListTopic(selectedYourTopics)
+    setListTopicId(selectedYourTopics)
     closeModal()
+  }
+
+  const handleCreateRoom = () => {
+    postRequest(`${endpointBase.ROOM}`, {
+      data: {
+        topics: listTopicId,
+        time: timeOut,
+      },
+    })
+      .then(() => {
+        message.success('Create success')
+        handelClose()
+        renderUI()
+        setListTopic([])
+        setListTopicId([])
+        setSelectedYourTopics([])
+        setTimeOut('')
+      })
+      .catch(() => {})
   }
 
   return (
@@ -48,61 +77,35 @@ export default function CreateRoom({ open, handelClose }: Props) {
       <Modal width={700} open={isOpen} onCancel={closeModal}>
         <h2 className="text-2xl font-bold py-2">Your topic:</h2>
         <div className="flex overflow-x-auto gap-5">
-          {[0, 1, 2, 3, 4, 5].map((item) => (
+          {listTopic.map((item, index) => (
             <div
-              key={item}
+              key={index}
               className={`min-w-[230px] p-5 relative border-[2px] ${
-                selectedYourTopics.includes(item) ? 'border-green-500' : 'border-[rgb(96,_11,_118)]'
-              } rounded-2xl cursor-pointer`}
-              onClick={() => handleSelection(item, setSelectedYourTopics, selectedYourTopics)}
-            >
-              {selectedYourTopics.includes(item) ? (
-                <TiTick className="absolute top-1 right-1 text-2xl" />
-              ) : null}
-
-              <Image
-                width={74}
-                preview={false}
-                className="rounded-xl"
-                src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
-              />
-              <div className="py-[10px]">
-                <p className="text-2xl font-extrabold">{`Topic ${item}`}</p>
-                <p className="text-sm font-bold">300 Image</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <h2 className="text-2xl font-bold py-2">Suggest topic:</h2>
-        <div className="flex overflow-x-auto gap-5">
-          {[0, 1, 2, 3, 4, 5].map((item) => (
-            <div
-              key={item}
-              className={`min-w-[230px] p-5 relative border-[2px] ${
-                selectedSuggestTopics.includes(item)
+                selectedYourTopics.includes(item.id)
                   ? 'border-green-500'
                   : 'border-[rgb(96,_11,_118)]'
               } rounded-2xl cursor-pointer`}
-              onClick={() => handleSelection(item, setSelectedSuggestTopics, selectedSuggestTopics)}
+              onClick={() => handleSelection(item.id, setSelectedYourTopics, selectedYourTopics)}
             >
-              {selectedSuggestTopics.includes(item) ? (
+              {selectedYourTopics.includes(item.id) ? (
                 <TiTick className="absolute top-1 right-1 text-2xl" />
               ) : null}
 
               <Image
                 width={74}
+                height={74}
                 preview={false}
-                className="rounded-xl"
-                src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
+                className="rounded-xl border-[2px] object-cover"
+                src={item.banner}
               />
               <div className="py-[10px]">
-                <p className="text-2xl font-extrabold">{`Topic ${item}`}</p>
-                <p className="text-sm font-bold">300 Image</p>
+                <p className="text-2xl font-extrabold">{`Topic ${item.name}`}</p>
+                <p className="text-sm font-bold">{`${item.count_image} Images`}</p>
               </div>
             </div>
           ))}
         </div>
+
         <Flex className="gap-6">
           <Button onClick={closeModal} className="w-full mt-6" type="default">
             Cancel
@@ -115,23 +118,30 @@ export default function CreateRoom({ open, handelClose }: Props) {
 
       {/* Create */}
       <Modal width={700} open={open} onCancel={handelClose} title="Create room">
-        <div className={`flex overflow-x-auto gap-5 ${!listTopic.length ? 'justify-center' : ''}`}>
-          {listTopic.map((item) => (
+        <div
+          className={`flex overflow-x-auto gap-5 ${!listTopicId.length ? 'justify-center' : ''}`}
+        >
+          {listTopicId.map((item, index) => (
             <div
-              key={item}
+              key={index}
               className={`min-w-[230px] p-5 relative border-[2px] ${
                 selectedYourTopics.includes(item) ? 'border-green-500' : 'border-[rgb(96,_11,_118)]'
               } rounded-2xl cursor-pointer`}
             >
               <Image
                 width={74}
+                height={74}
                 preview={false}
-                className="rounded-xl"
-                src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
+                className="rounded-xl border object-cover"
+                src={listTopic.find((i) => i.id === item)?.banner ?? ''}
               />
               <div className="py-[10px]">
-                <p className="text-2xl font-extrabold">{`Topic ${item}`}</p>
-                <p className="text-sm font-bold">300 Image</p>
+                <p className="text-2xl font-extrabold">{`${
+                  listTopic.find((i) => i.id === item)?.name ?? ''
+                }`}</p>
+                <p className="text-sm font-bold">{`${
+                  listTopic.find((i) => i.id === item)?.count_image ?? ''
+                } Images`}</p>
               </div>
             </div>
           ))}
@@ -143,32 +153,15 @@ export default function CreateRoom({ open, handelClose }: Props) {
           </div>
         </div>
 
-        <div className="flex justify-between max-w-[400px] m-auto mt-6">
-          <div className="flex justify-center flex-col items-center">
-            <p className="text-2xl font-bold">Model</p>
-            <Select
-              onChange={(e) => setSelectedModel(e)}
-              defaultValue={[selectedModel]}
-              className="w-[100px] h-[40px] [&_.ant-select-selector]:border-[2px] [&_.ant-select-selector]:border-[#000] [&_.ant-select-selection-item]:!font-bold"
-              options={[
-                {
-                  label: '1 VS 1',
-                  value: '1 VS 1',
-                },
-                {
-                  label: 'GK',
-                  value: 'GK',
-                },
-              ]}
-            />
-          </div>
-          <div className="flex justify-center flex-col items-center">
+        <div className="flex justify-between w-full max-w-[250px] m-auto mt-6">
+          <div className="flex justify-center flex-col items-center w-full">
             <p className="text-2xl font-bold">Time</p>
             <Input
               value={timeOut}
               onChange={(e) => setTimeOut(e.target.value)}
               placeholder="Time"
-              className="w-[100px] h-[40px] !border-[2px] !border-[#000] !font-bold"
+              type="number"
+              className="w-full h-[40px] !border-[2px] !border-[#000] !font-bold"
             />
           </div>
         </div>
@@ -179,14 +172,12 @@ export default function CreateRoom({ open, handelClose }: Props) {
           </Button>
           <Button
             onClick={() => {
-              if ((timeOut !== '' && selectedYourTopics.length) || selectedSuggestTopics.length) {
-                router.push(
-                  `${selectedModel === '1 VS 1' ? '/waiting/one-and-one' : '/waiting/one-and-gk'}`,
-                )
+              if (timeOut !== '' && selectedYourTopics.length) {
+                handleCreateRoom()
               } else {
                 if (timeOut === '') {
                   message.warning('Please input time')
-                } else if (!selectedYourTopics.length || !selectedSuggestTopics.length) {
+                } else if (!selectedYourTopics.length) {
                   message.warning('Please select topic')
                 } else {
                   message.error('Error')

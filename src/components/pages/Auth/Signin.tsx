@@ -46,7 +46,7 @@ export default function Signin({ onChangeTab }: { onChangeTab: () => void }) {
         )
         message.success('Login successfully')
         if (res?.user?.is_superuser) {
-          router.push('/toppics')
+          router.push('/topics')
         } else {
           router.push('/home')
         }
