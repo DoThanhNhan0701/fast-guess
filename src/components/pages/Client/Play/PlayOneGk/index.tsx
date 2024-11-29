@@ -86,7 +86,7 @@ export default function PlayOneGk() {
 
       <Row align={'middle'} gutter={36} className="justify-center max-w-[80%] !m-auto">
         <Col span={5} className="flex items-center justify-center flex-col gap-2 ">
-          <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">45</p>
+          <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl">45</p>
         </Col>
         <Col span={14} className="flex items-center justify-center">
           <FaLongArrowAltLeft className="text-3xl text-[#15683b]" />
@@ -99,7 +99,7 @@ export default function PlayOneGk() {
           <FaLongArrowAltRight className="text-3xl" />
         </Col>
         <Col span={5} className="flex items-center justify-center flex-col gap-2 ">
-          <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">60</p>
+          <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl">60</p>
         </Col>
       </Row>
       {/* --- */}
