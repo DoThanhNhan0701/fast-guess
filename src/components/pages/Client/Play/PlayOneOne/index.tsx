@@ -1,3 +1,6 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
 import { Col, Flex, Image, Row } from 'antd'
 import { HomeOutlined, SettingOutlined } from '@ant-design/icons'
 import { FaLongArrowAltLeft, FaLongArrowAltRight } from 'react-icons/fa'
@@ -7,6 +10,8 @@ import Content from '~/components/common/Content'
 import Input from '~/components/common/Input'
 
 export default function PlayOneOne() {
+  const router = useRouter()
+
   return (
     <Content
       layout="client"
@@ -96,7 +101,11 @@ export default function PlayOneOne() {
       </Row>
       <div className="max-w-[40%] m-auto">
         <Flex className="gap-6 mt-10">
-          <Button className="w-full" type="default">
+          <Button
+            onClick={() => router.push('/play-one-one/0/result')}
+            className="w-full"
+            type="default"
+          >
             Submit
           </Button>
           <Button className="w-full" type="primary">
