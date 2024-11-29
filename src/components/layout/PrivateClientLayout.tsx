@@ -5,6 +5,7 @@ import { ReactNode } from 'react'
 
 import { usePathname, useRouter } from 'next/navigation'
 import { FaRegUser } from 'react-icons/fa'
+import Image from 'next/image'
 
 const { Header, Content, Footer } = Layout
 
@@ -32,9 +33,9 @@ export default function PrivateClientLayout({ children }: { children: ReactNode 
       >
         <div
           onClick={() => router.push('/home')}
-          className="cursor-pointer demo-logo-vertical h-8 px-3 mr-3 rounded-md bg-slate-600 text-white font-bold flex items-center justify-center"
+          className="m-4 h-8 rounded-md font-bold flex items-center justify-center"
         >
-          Fast Guess
+          <Image src={'/images/logo.svg'} width={100} height={30} alt="" />
         </div>
         <Menu
           theme="dark"

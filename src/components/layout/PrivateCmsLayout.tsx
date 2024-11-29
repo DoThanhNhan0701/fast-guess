@@ -5,6 +5,7 @@ import { Avatar, Flex, Layout, Menu, MenuProps, theme } from 'antd'
 import { ReactNode, useState } from 'react'
 
 import { usePathname, useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 const { Header, Content, Footer, Sider } = Layout
 
@@ -47,8 +48,8 @@ export default function PrivateCmsLayout({ children }: { children: ReactNode }) 
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
       >
-        <div className="demo-logo-vertical m-4 h-8 rounded-md bg-slate-600 text-white font-bold flex items-center justify-center">
-          Fast Guess
+        <div className="m-4 h-8 rounded-md font-bold flex items-center justify-center">
+          <Image src={'/images/logo.svg'} width={200} height={60} alt="" />
         </div>
         <Menu
           theme="dark"
