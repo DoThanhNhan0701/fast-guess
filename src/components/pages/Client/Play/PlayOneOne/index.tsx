@@ -89,7 +89,7 @@ export default function PlayOneOne() {
   useEffect(() => {
     ;(async () => {
       try {
-        const response = await getRequest<IRoom>(`${endpointBase.ROOM}${'1450e5aca306'}/`)
+        const response = await getRequest<IRoom>(`${endpointBase.ROOM}${roomID}/`)
         player1CountDown.setTime(response.time)
         player2CountDown.setTime(response.time)
         setRoomData(response)
