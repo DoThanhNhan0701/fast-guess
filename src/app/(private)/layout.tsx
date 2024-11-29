@@ -24,7 +24,7 @@ export default function App({ children }: { children: ReactNode }) {
 
     if (!refreshToken) {
       router.replace('/auth')
-    } else if (!userInfo?.pk) {
+    } else if (!userInfo?.id) {
       getMe()
     } else {
       setReady(true)

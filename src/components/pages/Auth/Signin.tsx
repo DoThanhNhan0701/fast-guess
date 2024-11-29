@@ -33,16 +33,23 @@ export default function Signin({ onChangeTab }: { onChangeTab: () => void }) {
             refresh: res.refresh,
             access: res.access,
             userInfo: {
-              pk: res.user.pk,
+              id: res.user.id,
               email: res.user.email,
               first_name: res.user.first_name,
               last_name: res.user.last_name,
               username: res.user.username,
+              is_active: res.user.is_active,
+              is_superuser: res.user.is_superuser,
+              is_staff: res.user.is_staff,
             },
           }),
         )
         message.success('Login successfully')
-        router.push('/home')
+        if (res?.user?.is_superuser) {
+          router.push('/toppics')
+        } else {
+          router.push('/home')
+        }
         setLoading(false)
       })
       .catch(() => {

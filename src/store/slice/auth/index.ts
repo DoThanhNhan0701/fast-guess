@@ -3,11 +3,14 @@ import { REFRESH_TOKEN } from '~/settings/constants'
 import webStorage from '~/utils/webStorageClient'
 
 interface User {
-  pk: string
+  id: string
   username: string
   email: string
   first_name: string
   last_name: string
+  is_superuser: boolean
+  is_staff: boolean
+  is_active: boolean
 }
 
 export interface AuthInterface {
