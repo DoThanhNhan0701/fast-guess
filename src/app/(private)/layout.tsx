@@ -17,7 +17,7 @@ export default function App({ children }: { children: ReactNode }) {
   const router = useRouter()
 
   const { userInfo } = useSelector((state: RootState) => state.auth)
-  const [ready, setReady] = useState(true)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     const refreshToken = webStorageClient.get(REFRESH_TOKEN)

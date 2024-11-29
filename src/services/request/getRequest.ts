@@ -5,7 +5,7 @@ import { ACCESS_TOKEN } from '~/settings/constants'
 import webStorageClient from '~/utils/webStorageClient'
 import { getCookiesByKey } from '~/utils/webStorageServer'
 
-const getRequest = (url: string, options?: RequestOptionsInterface): Promise<object> => {
+const getRequest = <T = object>(url: string, options?: RequestOptionsInterface): Promise<T> => {
   const params = options?.params
   const context = options?.context
   const enableFlashMessageSuccess = options?.enableFlashMessageSuccess || false

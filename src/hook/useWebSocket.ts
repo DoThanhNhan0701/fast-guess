@@ -1,13 +1,11 @@
 import { useState, useRef, useLayoutEffect } from 'react'
 
 interface WebSocketMessage {
-  type: string
-  players: string[]
-  message: string
+  action: 'submit' | 'start_game'
+  [key: string]: any
 }
 
-export const useWebSocket = (url: string) => {
-  const [messages, setMessages] = useState<WebSocketMessage>()
+export const useWebSocket = (url: string, onMessage?: (data: any) => void) => {
   const [isConnected, setIsConnected] = useState(false)
   const socketRef = useRef<WebSocket | null>(null)
 
@@ -16,11 +14,10 @@ export const useWebSocket = (url: string) => {
     socketRef.current = socket
 
     socket.onopen = () => setIsConnected(true)
-    socket.onmessage = (event) => {
-      const data: WebSocketMessage = JSON.parse(event.data)
-      setMessages(data)
+
+    socket.onclose = (ws) => {
+      setIsConnected(false)
     }
-    socket.onclose = () => setIsConnected(false)
     socket.onerror = (error) => console.error('WebSocket error:', error)
 
     return () => {
@@ -28,11 +25,17 @@ export const useWebSocket = (url: string) => {
     }
   }, [url])
 
+  if (socketRef.current) {
+    socketRef.current.onmessage = (e: MessageEvent) => {
+      onMessage?.(JSON.parse(e.data))
+    }
+  }
+
   const sendMessage = (message: WebSocketMessage) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify(message))
     }
   }
 
-  return { messages, isConnected, sendMessage }
+  return { isConnected, sendMessage }
 }
