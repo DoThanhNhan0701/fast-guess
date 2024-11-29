@@ -11,9 +11,9 @@ const endpointAuth = {
 const endpointBase = {
   USER: `${prefixBase}/user`,
   GET_ME: `${prefixBase}/auth/user/`,
-  TEACHER_UPDATE: `${prefixBase}/teacher/update/`,
-  CLASSROOM: `${prefixBase}/classroom`,
-  GROUP: `${prefixBase}/group`,
+  TOPIC: `${prefixBase}/topic/`,
+  QUESTION: `${prefixBase}/question/`,
+  ROOM: `${prefixBase}/room/`,
   TEACHER: `${prefixBase}/teacher/`,
   PLAN_LIST: `${prefixBase}/plan/list/`,
   PLAN_CREATE: `${prefixBase}/plan/create/`,
