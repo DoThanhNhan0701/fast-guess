@@ -1,8 +1,8 @@
 'use client'
 
-import Image from 'next/image'
 import { PieChartOutlined, UserOutlined } from '@ant-design/icons'
 import { Avatar, Flex, Layout, Menu, MenuProps, theme } from 'antd'
+import Image from 'next/image'
 import { ReactNode, useState } from 'react'
 
 import { usePathname, useRouter } from 'next/navigation'
@@ -55,6 +55,7 @@ export default function PrivateCmsLayout({ children }: { children: ReactNode }) 
           theme="dark"
           className="sticky top-0"
           defaultSelectedKeys={[pathname.replace('/', '')]}
+          selectedKeys={[pathname.replace('/', '')]}
           mode="inline"
           items={items}
           onClick={(info) => {

@@ -4,7 +4,7 @@ const prefixOther: string = '/api'
 
 const endpointAuth = {
   LOGIN: `${prefixAuth}/auth/login/`,
-  REGISTER: `${prefixAuth}/auth/register/`,
+  REGISTER: `${prefixAuth}/auth/registration/`,
   VERIFI: `${prefixAuth}/auth/verify/`,
 }
 

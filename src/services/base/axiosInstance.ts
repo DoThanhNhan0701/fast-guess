@@ -38,14 +38,16 @@ axiosInstance.interceptors.response.use(
 
       const tokenRefresh = webStorageClient.get(REFRESH_TOKEN)
 
-      return axiosInstance.post('api/auth/refresh/', { refresh: tokenRefresh }).then((res: any) => {
-        // Update the token in the headers
-        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${res?.access}`
-        originalRequest.headers['Authorization'] = `Bearer ${res?.access}`
-        webStorageClient.setToken(res?.access)
-        // Repeat the original request with the updated headers
-        return axiosInstance(originalRequest)
-      })
+      return axiosInstance
+        .post('/api/auth/token/refresh/', { refresh: tokenRefresh })
+        .then((res: any) => {
+          // Update the token in the headers
+          axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${res?.access}`
+          originalRequest.headers['Authorization'] = `Bearer ${res?.access}`
+          webStorageClient.setToken(res?.access)
+          // Repeat the original request with the updated headers
+          return axiosInstance(originalRequest)
+        })
     }
 
     return Promise.reject(error)
