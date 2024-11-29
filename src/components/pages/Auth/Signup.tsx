@@ -20,22 +20,20 @@ export default function Signup({ onChangeTab }: { onChangeTab: () => void }) {
     setLoading(true)
     postRequest(endpointAuth.REGISTER, {
       data: {
-        metadata: {
-          email: values.email,
-          password: values.password,
-        },
-        role: Role.TEACHER,
+        username: values.username,
+        email: values.email,
+        password1: values.password,
+        password2: values.password,
       },
     })
       .then((res: any) => {
-        message.success('Register successfully')
-        router.push(`/auth?tab=VERIFI&email=${values.email}`)
+        message.success(`${values.username} Register successfully `)
+        router.push(`/auth?tab=SIGNIN`)
         setLoading(false)
       })
       .catch((res: any) => {
         message.error(res?.response?.data?.message || 'System error')
         setLoading(false)
-        console.log(res)
       })
       .finally(() => {
         setLoading(false)
@@ -50,10 +48,22 @@ export default function Signup({ onChangeTab }: { onChangeTab: () => void }) {
         initialValues={{
           email: '',
           password: '',
+          username: '',
         }}
         onFinish={onFinish}
         className="mt-4 mx-auto max-w-md"
       >
+        <Form.Item
+          name={'username'}
+          validateFirst
+          rules={[
+            {
+              required: true,
+            },
+          ]}
+        >
+          <Input placeholder="Username" size="large" />
+        </Form.Item>
         <Form.Item
           name={'email'}
           validateFirst

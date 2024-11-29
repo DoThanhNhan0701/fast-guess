@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { HomeOutlined } from '@ant-design/icons'
-import { Avatar, Card, Col, Flex, Image, Pagination, Row } from 'antd'
+import { Avatar, Card, Col, Empty, Flex, Image, Pagination, Row } from 'antd'
 
 import Button from '~/components/common/Button'
 import Content from '~/components/common/Content'
@@ -12,49 +12,6 @@ import useModal from '~/hook/useModal'
 import CreateRoom from './_component/CreateRoom'
 import { getRequest } from '~/services/request'
 import { endpointBase } from '~/services/endpoint'
-
-const dataRoom = [
-  {
-    player: 1,
-    time: '120',
-    mode: '1 VS 1',
-    image: '',
-  },
-  {
-    player: 2,
-    time: '120',
-    mode: 'GK',
-    image:
-      'https://www.ninosalvaggio.com/wp-content/uploads/2023/07/Ninos_What-Makes-A-Fruit-A-Fruit-1024x683.jpg',
-  },
-  {
-    player: 2,
-    time: '120',
-    mode: '1 VS 1',
-    image:
-      'https://i0.wp.com/echoofwings.com/wp-content/uploads/2024/06/most-colorful-birds.jpg?w=615&ssl=1',
-  },
-  {
-    player: 1,
-    time: '120',
-    mode: 'GK',
-    image:
-      'https://tailieutienganh.edu.vn/public/files/upload/default/images/phu-am-danh-tu-dem-duoc-so-it-so-nhieu-khong-dem-duoc-tu-vung-nghe-nghiep-jobs-3.jpg',
-  },
-  {
-    player: 1,
-    time: '120',
-    mode: 'GK',
-    image: 'https://img.jagranjosh.com/images/2024/February/622024/World-Most-Valuable-Club.webp',
-  },
-  {
-    player: 2,
-    time: '120',
-    mode: '1 VS 1',
-    image:
-      'https://cdn.thuvienphapluat.vn//uploads/Hoidapphapluat/2023/PHCM/Thang01/17-1/the-duc-the-thao.jpg',
-  },
-]
 
 interface Room {
   created_by: string
@@ -149,10 +106,12 @@ export default function Home() {
             </Col>
           ))}
         </Row>
-        {!loading && listRoom.length && (
+        {!loading && listRoom.length ? (
           <Flex justify="center" className="mt-4">
             <Pagination total={1} defaultPageSize={1} responsive={false} />
           </Flex>
+        ) : (
+          <Empty />
         )}
       </Content>
     </>

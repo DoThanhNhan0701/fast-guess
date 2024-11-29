@@ -1,11 +1,13 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { EditOutlined, EllipsisOutlined, SettingOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
 import { Card, Col, Image, Row } from 'antd'
 
 import Content from '~/components/common/Content'
+import { getRequest } from '~/services/request'
+import { endpointBase } from '~/services/endpoint'
 
 const dataDetailTopic = [
   {
@@ -62,21 +64,33 @@ const dataDetailTopic = [
   },
 ]
 
+interface ListImage {
+  image: string
+  name: string
+}
+
 export default function DetailTopic() {
   const router = useRouter()
+  const pathName = usePathname()
   const [loading, setLoading] = useState<boolean>(true)
 
-  useEffect(() => {
-    setTimeout(() => {
-      setLoading(false)
-    }, 500)
-  }, [])
+  const [listImage, setListImage] = useState<ListImage[]>([])
 
-  const actions: React.ReactNode[] = [
-    <EditOutlined key="edit" />,
-    <SettingOutlined key="setting" />,
-    <EllipsisOutlined key="ellipsis" />,
-  ]
+  useEffect(() => {
+    setLoading(true)
+    getRequest(`${endpointBase.QUESTION}`, {
+      params: {
+        topic: `${pathName?.split('/')[2]}`,
+      },
+    })
+      .then((res: any) => {
+        setListImage(res || [])
+        setLoading(false)
+      })
+      .catch(() => {
+        setLoading(false)
+      })
+  }, [])
 
   return (
     <Content
@@ -91,7 +105,7 @@ export default function DetailTopic() {
       ]}
     >
       <Row gutter={[24, 24]} className="mt-4">
-        {dataDetailTopic.map((item, index) => (
+        {listImage.map((item, index) => (
           <Col
             onClick={() => router.push(`/topics/${index}`)}
             key={index}
@@ -105,7 +119,7 @@ export default function DetailTopic() {
           >
             <Card
               color="#f00"
-              className="[&_.anticon]:justify-center [&_.ant-card-bordered]:!border-[1px] [&_.ant-card-bordered]:!border-[#000]"
+              className="[&_.anticon]:justify-center !border-[1px] !border-[#000]"
               loading={loading}
             >
               <Card.Meta
@@ -118,11 +132,7 @@ export default function DetailTopic() {
                       height={150}
                       src={item.image}
                     />
-                    <Row>
-                      <Col span={12}>
-                        <p className="text-base font-bold text-black py-2">{`${item.name}`}</p>
-                      </Col>
-                    </Row>
+                    <p className="text-base font-bold text-black py-2">{`${item.name}`}</p>
                   </>
                 }
               />

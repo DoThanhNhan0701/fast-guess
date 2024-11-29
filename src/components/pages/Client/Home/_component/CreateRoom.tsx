@@ -1,4 +1,4 @@
-import { Flex, Image, Input, message } from 'antd'
+import { Empty, Flex, Image, Input, message } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { FaPlus } from 'react-icons/fa'
 import { TiTick } from 'react-icons/ti'
@@ -64,7 +64,6 @@ export default function CreateRoom({ open, handelClose, renderUI }: Props) {
         message.success('Create success')
         handelClose()
         renderUI()
-        setListTopic([])
         setListTopicId([])
         setSelectedYourTopics([])
         setTimeOut('')
@@ -76,34 +75,38 @@ export default function CreateRoom({ open, handelClose, renderUI }: Props) {
     <>
       <Modal width={700} open={isOpen} onCancel={closeModal}>
         <h2 className="text-2xl font-bold py-2">Your topic:</h2>
-        <div className="flex overflow-x-auto gap-5">
-          {listTopic.map((item, index) => (
-            <div
-              key={index}
-              className={`min-w-[230px] p-5 relative border-[2px] ${
-                selectedYourTopics.includes(item.id)
-                  ? 'border-green-500'
-                  : 'border-[rgb(96,_11,_118)]'
-              } rounded-2xl cursor-pointer`}
-              onClick={() => handleSelection(item.id, setSelectedYourTopics, selectedYourTopics)}
-            >
-              {selectedYourTopics.includes(item.id) ? (
-                <TiTick className="absolute top-1 right-1 text-2xl" />
-              ) : null}
+        <div className="flex overflow-x-auto justify-center gap-5">
+          {listTopic.length ? (
+            listTopic.map((item, index) => (
+              <div
+                key={index}
+                className={`min-w-[230px] p-5 relative border-[2px] ${
+                  selectedYourTopics.includes(item.id)
+                    ? 'border-green-500'
+                    : 'border-[rgb(96,_11,_118)]'
+                } rounded-2xl cursor-pointer`}
+                onClick={() => handleSelection(item.id, setSelectedYourTopics, selectedYourTopics)}
+              >
+                {selectedYourTopics.includes(item.id) ? (
+                  <TiTick className="absolute top-1 right-1 text-2xl" />
+                ) : null}
 
-              <Image
-                width={74}
-                height={74}
-                preview={false}
-                className="rounded-xl border-[2px] object-cover"
-                src={item.banner}
-              />
-              <div className="py-[10px]">
-                <p className="text-2xl font-extrabold">{`Topic ${item.name}`}</p>
-                <p className="text-sm font-bold">{`${item.count_image} Images`}</p>
+                <Image
+                  width={74}
+                  height={74}
+                  preview={false}
+                  className="rounded-xl border-[2px] object-cover"
+                  src={item.banner}
+                />
+                <div className="py-[10px]">
+                  <p className="text-2xl font-extrabold">{`Topic ${item.name}`}</p>
+                  <p className="text-sm font-bold">{`${item.count_image} Images`}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <Empty />
+          )}
         </div>
 
         <Flex className="gap-6">
