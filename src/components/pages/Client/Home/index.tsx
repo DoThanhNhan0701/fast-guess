@@ -12,6 +12,7 @@ import useModal from '~/hook/useModal'
 import CreateRoom from './_component/CreateRoom'
 import { getRequest } from '~/services/request'
 import { endpointBase } from '~/services/endpoint'
+import useDebounce from '~/hook/useDebounce'
 
 interface Room {
   created_by: string
@@ -28,10 +29,17 @@ export default function Home() {
   const { isOpen, openModal, closeModal } = useModal()
   const [listRoom, setListRoom] = useState<Room[]>([])
   const [isRender, setIsRender] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const useDb = useDebounce(search, 700)
 
   useEffect(() => {
     setLoading(true)
-    getRequest(endpointBase.ROOM, {})
+    getRequest(endpointBase.ROOM, {
+      params: {
+        search: search,
+      },
+    })
       .then((res: any) => {
         setListRoom(res || [])
         setLoading(false)
@@ -39,7 +47,7 @@ export default function Home() {
       .catch(() => {
         setLoading(false)
       })
-  }, [isRender])
+  }, [isRender, useDb])
 
   return (
     <>
@@ -56,7 +64,12 @@ export default function Home() {
         ]}
       >
         <Flex gap={12}>
-          <Input className="max-w-[400px]" placeholder="Search" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-[400px]"
+            placeholder="Search"
+          />
           <Button type="primary" onClick={openModal}>
             Create
           </Button>

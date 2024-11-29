@@ -1,16 +1,30 @@
 'use client'
 
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
-import { Button, Space, Table, TableProps, Tag } from 'antd'
-import { useState } from 'react'
+import { Button, Space, Table } from 'antd'
+import { useEffect, useState } from 'react'
 import Content from '~/components/common/Content'
+import { endpointBase } from '~/services/endpoint'
+import { getRequest } from '~/services/request'
+
+interface User {
+  id: number
+  username: string
+  email: string
+  first_name: string
+  last_name: string
+}
 
 export default function Users() {
-  interface User {
-    id: number
-    username: string
-    email: string
-  }
+  const [listUser, setListUser] = useState<User[]>([])
+
+  useEffect(() => {
+    getRequest(endpointBase.USER)
+      .then((e: any) => {
+        setListUser(e)
+      })
+      .catch(() => {})
+  }, [])
 
   const columns = [
     {
@@ -24,6 +38,18 @@ export default function Users() {
       key: 'username',
     },
     {
+      title: 'First name',
+      dataIndex: 'first_name',
+      key: 'first_name',
+      render: (text: string, record: User) => <p key={record.id}>{text ? text : '---'}</p>,
+    },
+    {
+      title: 'Last name',
+      dataIndex: 'last_name',
+      key: 'last_name',
+      render: (text: string, record: User) => <p key={record.id}>{text ? text : '---'}</p>,
+    },
+    {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
@@ -32,22 +58,13 @@ export default function Users() {
       title: 'Actions',
       key: 'actions',
       render: (text: string, record: User) => (
-        <Space size="middle">
+        <Space key={record.id} size="middle">
           <Button icon={<EditOutlined />} type="link" />
           <Button icon={<DeleteOutlined />} type="link" danger />
         </Space>
       ),
     },
   ]
-
-  const [users, _] = useState<User[]>([
-    { id: 1, username: 'JohnDoe', email: 'john.doe@example.com' },
-    { id: 2, username: 'JaneSmith', email: 'jane.smith@example.com' },
-    { id: 3, username: 'JaneSmith1', email: 'jane.smith@example.com' },
-    { id: 4, username: 'JaneSmith3', email: 'jane.smith@example.com' },
-    { id: 5, username: 'JaneSmith2', email: 'jane.smith@example.com' },
-    { id: 6, username: 'JaneSmith5', email: 'jane.smith@example.com' },
-  ])
 
   return (
     <>
@@ -64,7 +81,7 @@ export default function Users() {
         ]}
       >
         <div style={{ padding: 20 }}>
-          <Table dataSource={users} columns={columns} rowKey="id" bordered />
+          <Table dataSource={listUser} columns={columns} rowKey="id" bordered />
         </div>
       </Content>
     </>
