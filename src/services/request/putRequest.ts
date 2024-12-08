@@ -21,6 +21,7 @@ const updateRequest = (
           'Content-Type': fomrData ? 'multipart/form-data' : 'application/json',
           // TODO
         },
+        params: options?.params,
       })
       .then((res: any) => {
         if (enableFlashMessageSuccess && res?.message) {
@@ -41,6 +42,7 @@ const updateRequest = (
   return axiosInstance
     .put(url, data, {
       headers: {},
+      params: options?.params,
     })
     .then((res: any) => {
       if (enableFlashMessageSuccess && res?.message) {

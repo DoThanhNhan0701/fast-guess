@@ -26,7 +26,7 @@ export default function Users() {
       .catch(() => {})
   }, [])
 
-  const columns = [
+  const columns: any[] = [
     {
       title: 'ID',
       dataIndex: 'id',
@@ -36,27 +36,32 @@ export default function Users() {
       title: 'Username',
       dataIndex: 'username',
       key: 'username',
+      align: 'center',
     },
     {
       title: 'First name',
       dataIndex: 'first_name',
       key: 'first_name',
+      align: 'center',
       render: (text: string, record: User) => <p key={record.id}>{text ? text : '---'}</p>,
     },
     {
       title: 'Last name',
       dataIndex: 'last_name',
       key: 'last_name',
+      align: 'center',
       render: (text: string, record: User) => <p key={record.id}>{text ? text : '---'}</p>,
     },
     {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
+      align: 'center',
     },
     {
       title: 'Actions',
       key: 'actions',
+      align: 'center',
       render: (text: string, record: User) => (
         <Space key={record.id} size="middle">
           <Button icon={<EditOutlined />} type="link" />
