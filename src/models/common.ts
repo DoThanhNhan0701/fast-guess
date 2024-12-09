@@ -1,4 +1,4 @@
-type WsEventType = 'start' | 'question' | 'turn' | 'error' | 'end' | 'user_joined'
+type WsEventType = 'start' | 'question' | 'turn' | 'error' | 'end' | 'user_joined' | 'change_role'
 
 export interface IRoom {
   id: string
@@ -58,7 +58,22 @@ interface IUserJoin {
   type: 'user_joined'
   message: string
   username: string
+  players: string[]
+  examiner?: null | string
+  role?: 'player' | 'examiner'
 }
+
+type IChangeRole = {
+  type: 'change_role'
+} & (
+  | {
+      error: string
+    }
+  | {
+      new_role: 'examiner' | 'player'
+      user: string
+    }
+)
 
 type WsEvent<T extends WsEventType> = T extends 'start'
   ? IStartGame
@@ -70,6 +85,8 @@ type WsEvent<T extends WsEventType> = T extends 'start'
   ? ITurn
   : T extends 'user_joined'
   ? IUserJoin
+  : T extends 'change_role'
+  ? IChangeRole
   : IEnd
 
 export type TWsEvent<T extends WsEventType> = WsEvent<T>

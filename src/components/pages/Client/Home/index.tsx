@@ -21,6 +21,7 @@ interface Room {
   id: string
   time: number
   topics: string[]
+  type: 'fighting' | 'examiner'
 }
 
 export default function Home() {
@@ -48,6 +49,11 @@ export default function Home() {
         setLoading(false)
       })
   }, [isRender, useDb])
+
+  const handleClickRoom = (room: Room) => {
+    if (room.type === 'examiner') router.push(`/play-one-gk/${room.id}`)
+    else router.push(`/play-one-one/${room.id}`)
+  }
 
   return (
     <>
@@ -78,7 +84,7 @@ export default function Home() {
           {listRoom.map((item, index) => (
             <Col key={index} span={6} xs={24} sm={12} md={12} lg={8} xl={6} xxl={6}>
               <div
-                onClick={() => router.push(`/play-one-one/${item.id}`)}
+                onClick={() => handleClickRoom(item)}
                 className="cursor-pointer p-1 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-xl transition ease-in-out delay-150 bg-blue-500 hover:-translate-y-1 hover:scale-100 duration-300"
               >
                 <Card className="border-none rounded-lg" loading={loading}>
@@ -99,7 +105,7 @@ export default function Home() {
                             'https://motherspet.com/blogs/wp-content/webp-express/webp-images/uploads/2024/07/100-wild-animals-870x490.jpg.webp'
                           }
                         />
-                        <Row>
+                        <Row className="text-base font-bold text-slate-800">
                           <Col span={12}>
                             <p className="text-base font-bold text-slate-800">{`Topic: ${
                               item.topics.length ?? 0
@@ -109,6 +115,12 @@ export default function Home() {
                             <p className="text-base font-bold text-slate-800">{`Time: ${
                               item?.time ? item.time : 0
                             } s`}</p>
+                          </Col>
+                          <Col span={12}>
+                            <p>Time: {item.time}s</p>
+                          </Col>
+                          <Col span={12}>
+                            <p>Time: {item.time}s</p>
                           </Col>
                         </Row>
                       </>
