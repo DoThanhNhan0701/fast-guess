@@ -18,6 +18,8 @@ import { IRoom, TWsEvent } from '~/models/common'
 import Button from '~/components/common/Button'
 import Content from '~/components/common/Content'
 import Input from '~/components/common/Input'
+import { Topic } from '../../Setting'
+import EditRoom from '../_component/EditRoom'
 
 export default function PlayOneOne() {
   const router = useRouter()
@@ -25,6 +27,7 @@ export default function PlayOneOne() {
   const wsUrl = `ws://${new URL(domainSocket ?? '').host}/ws/game/${roomID}/?token=${accessToken}`
   const { userInfo } = useSelector((state: RootState) => state.auth)
   const [roomData, setRoomData] = useState<IRoom | null>(null)
+  const [roomTopic, setRoomTopic] = useState<null | Topic>(null)
   const [answer, setAnswer] = useState('')
   const [opponent, setOpponent] = useState<string | null>(null)
 
@@ -34,8 +37,12 @@ export default function PlayOneOne() {
   const player2CountDown = useCountDown(roomData?.time || 61)
   const [currentImage, setCurrentImage] = useState<string | null>(null)
   const [result, setResult] = useState<'WIN' | 'LOSE' | null>(null)
-  const [joinedUser, setJoinedUser] = useState<string | null>(null)
   const [isError, setIsError] = useState(false)
+
+  const [status, setStatus] = useState<
+    'notAvailable' | 'waiting_opponent' | 'waiting_start' | 'playing'
+  >('notAvailable')
+  const [isEditing, setIsEditing] = useState(false)
 
   const handleSwitchTurn = () => {
     if (!player2CountDown.isRunning) {
@@ -53,6 +60,7 @@ export default function PlayOneOne() {
     switch (data.type) {
       case 'start':
         setCurrentStatus(null)
+        setStatus('playing')
         message.success(data.message)
         setOpponent(data.players.find((name) => name !== userInfo!.username)!)
         if (data.current_turn === userInfo?.username) player1CountDown.startCountDown()
@@ -74,8 +82,10 @@ export default function PlayOneOne() {
         break
 
       case 'user_joined':
-        if (data.username !== userInfo?.username) setCurrentStatus('NEED_START')
-        setJoinedUser(data.username)
+        if (data.players?.[0]) {
+          setOpponent(data.players[0])
+          if (userInfo?.username === roomData?.created_by.username) setStatus('waiting_start')
+        }
         break
 
       case 'end':
@@ -93,6 +103,8 @@ export default function PlayOneOne() {
         player1CountDown.setTime(response.time)
         player2CountDown.setTime(response.time)
         setRoomData(response)
+        const roomTopic = await getRequest<Topic>(`${endpointBase.TOPIC}${response.topics[0]}/`)
+        setRoomTopic(roomTopic)
       } catch (error) {}
     })()
   }, [])
@@ -132,8 +144,13 @@ export default function PlayOneOne() {
       ]}
     >
       <Flex justify="space-between">
-        <p className="font-bold text-2xl">ID: 1111</p>
-        <SettingOutlined className="text-2xl" />
+        <p className="font-bold text-2xl">ID: {roomID}</p>
+        {roomData?.created_by.username === userInfo?.username &&
+          ['waiting_start', 'notAvailable'].includes(status) && (
+            <button onClick={() => setIsEditing(true)}>
+              <SettingOutlined className="text-2xl" />
+            </button>
+          )}
       </Flex>
       <h1 className="text-4xl font-bold py-6 text-center">Fast Guess</h1>
 
@@ -158,33 +175,47 @@ export default function PlayOneOne() {
         </Col>
 
         <Col span={14} className="flex items-center justify-center">
-          {/* Topic */}
-          <FaLongArrowAltLeft
-            className={twMerge('text-3xl', player1CountDown.isRunning && 'text-[#15683b]')}
-          />
-          <div className={twMerge(player1CountDown.isRunning && 'text-[#15683b] font-medium')}>
-            -----------------------
-          </div>
-          <div
-            className={`min-w-[320px] p-5 relative border-[2px] border-[rgb(96,_11,_118)] rounded-2xl cursor-pointer text-center`}
-          >
-            {currentImage && (
-              <Image
-                width={200}
-                height={200}
-                preview={false}
-                className="rounded-xl object-cover"
-                src={`${domainSocket}${currentImage}`}
+          {status === 'playing' ? (
+            <>
+              <FaLongArrowAltLeft
+                className={twMerge('text-3xl', player1CountDown.isRunning && 'text-[#15683b]')}
               />
-            )}
-          </div>
-          <div className={twMerge(player2CountDown.isRunning && 'text-[#15683b] font-semibold')}>
-            -----------------------
-          </div>
-          <FaLongArrowAltRight
-            className={twMerge('text-3xl', player2CountDown.isRunning && 'text-[#15683b]')}
-          />
-          {/* End topic */}
+              <div className={twMerge(player1CountDown.isRunning && 'text-[#15683b] font-medium')}>
+                -----------------------
+              </div>
+              <div
+                className={`min-w-[320px] p-5 relative border-[2px] border-[rgb(96,_11,_118)] rounded-2xl cursor-pointer text-center`}
+              >
+                {currentImage && (
+                  <Image
+                    width={200}
+                    height={200}
+                    preview={false}
+                    className="rounded-xl object-cover"
+                    src={`${domainSocket}${currentImage}`}
+                  />
+                )}
+              </div>
+              <div
+                className={twMerge(player2CountDown.isRunning && 'text-[#15683b] font-semibold')}
+              >
+                -----------------------
+              </div>
+              <FaLongArrowAltRight
+                className={twMerge('text-3xl', player2CountDown.isRunning && 'text-[#15683b]')}
+              />
+            </>
+          ) : (
+            <div className="p-5 bg-gray-200 rounded-2xl">
+              <Image
+                src={roomTopic?.banner}
+                className="object-cover rounded-lg aspect-video"
+                preview={false}
+              />
+              <p className="text-center text-lg font-semibold mt-2">{roomTopic?.name}</p>
+              <p className="text-center font-medium">{roomTopic?.count_image} images</p>
+            </div>
+          )}
         </Col>
 
         <Col
@@ -208,64 +239,92 @@ export default function PlayOneOne() {
         </Col>
       </Row>
 
-      <Row align={'middle'} gutter={36} className="justify-center max-w-[80%] !m-auto">
-        <Col span={5} className="flex items-center justify-center flex-col gap-2 ">
-          <p
-            className={twMerge(
-              'font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl',
-              player1CountDown.isRunning && 'border-green-500',
-            )}
-          >
-            {player1CountDown.time}
-          </p>
-        </Col>
-        <Col span={14} className="flex items-center justify-center">
-          <FaLongArrowAltLeft
-            className={twMerge('text-3xl', !player1CountDown.isRunning && 'text-transparent')}
-          />
-          <div>--</div>
-          <Input
-            className={twMerge(
-              'h-[100px] border-[2px] border-[#000] text-6xl font-extrabold leading-[60px] text-center',
-              isError && 'border-red-500',
-            )}
-            value={answer}
-            onChange={(e) => {
-              setAnswer(e.target.value)
-              setIsError(false)
-            }}
-          />
-          <div>--</div>
-          <FaLongArrowAltRight
-            className={twMerge('text-3xl', !player2CountDown.isRunning && 'text-transparent')}
-          />
-        </Col>
-        <Col span={5} className="flex items-center justify-center flex-col gap-2 ">
-          <p
-            className={twMerge(
-              'font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl',
-              player2CountDown.isRunning && 'border-green-500',
-            )}
-          >
-            {player2CountDown.time}
-          </p>
-        </Col>
-      </Row>
-      <div className="max-w-[40%] m-auto">
-        <Flex className="gap-6 mt-10">
+      {status === 'playing' ? (
+        <Row align={'middle'} gutter={36} className="justify-center max-w-[80%] !m-auto">
+          <Col span={5} className="flex items-center justify-center flex-col gap-2 ">
+            <p
+              className={twMerge(
+                'font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl',
+                player1CountDown.isRunning && 'border-green-500',
+              )}
+            >
+              {player1CountDown.time}
+            </p>
+          </Col>
+          <Col span={14} className="flex items-center justify-center">
+            <FaLongArrowAltLeft
+              className={twMerge('text-3xl', !player1CountDown.isRunning && 'text-transparent')}
+            />
+            <div>--</div>
+            <Input
+              className={twMerge(
+                'h-[100px] border-[2px] border-[#000] text-6xl font-extrabold leading-[60px] text-center',
+                isError && 'border-red-500',
+              )}
+              value={answer}
+              onChange={(e) => {
+                setAnswer(e.target.value)
+                setIsError(false)
+              }}
+            />
+            <div>--</div>
+            <FaLongArrowAltRight
+              className={twMerge('text-3xl', !player2CountDown.isRunning && 'text-transparent')}
+            />
+          </Col>
+          <Col span={5} className="flex items-center justify-center flex-col gap-2 ">
+            <p
+              className={twMerge(
+                'font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl',
+                player2CountDown.isRunning && 'border-green-500',
+              )}
+            >
+              {player2CountDown.time}
+            </p>
+          </Col>
+        </Row>
+      ) : (
+        ''
+      )}
+
+      {status === 'playing' ? (
+        <div className="max-w-[40%] m-auto">
+          <Flex className="gap-6 mt-10">
+            <Button
+              onClick={handleSubmit}
+              className="w-full"
+              type="default"
+              disabled={!player1CountDown.isRunning}
+            >
+              Submit
+            </Button>
+            <Button className="w-full" type="primary" disabled={!player1CountDown.isRunning}>
+              Next
+            </Button>
+          </Flex>
+        </div>
+      ) : (
+        <Flex className="w-2/5 mx-auto gap-6 mt-14">
           <Button
-            onClick={handleSubmit}
+            onClick={handleStart}
             className="w-full"
-            type="default"
-            disabled={!player1CountDown.isRunning}
+            type="primary"
+            disabled={status !== 'waiting_start'}
+            loading={status === 'waiting_opponent'}
           >
-            Submit
+            Play
           </Button>
-          <Button className="w-full" type="primary" disabled={!player1CountDown.isRunning}>
-            Next
+          <Button
+            className="w-full"
+            disabled={status === 'waiting_opponent'}
+            onClick={() => {
+              router.replace('/home')
+            }}
+          >
+            Quit
           </Button>
         </Flex>
-      </div>
+      )}
       <Modal
         width={700}
         open={!!result}
@@ -311,27 +370,15 @@ export default function PlayOneOne() {
           </p>
         </div>
       </Modal>
-      <Modal open={!!currentStatus} centered destroyOnClose footer={null} closable={false}>
-        {currentStatus === 'NEED_START' ? (
-          <div>
-            <p className="text-xl text-center font-semibold">Start game</p>
-            <p className="text-lg">
-              <span className="font-bold text-green-950 text-xl">{joinedUser}</span> has join this
-              room. Let start now!
-            </p>
-            <Button type="primary" size="large" className="w-full mt-5" onClick={handleStart}>
-              Start game
-            </Button>
-          </div>
-        ) : (
-          <div>
-            <p className="text-center text-xl font-semibold">Waiting for host</p>
-            <Flex justify="center" align="center" className="aspect-video">
-              <Spin />
-            </Flex>
-            <p className="text-center font-bold">This game will start when host start game</p>
-          </div>
-        )}
+
+      <Modal
+        open={isEditing}
+        onCancel={() => setIsEditing(false)}
+        footer={null}
+        destroyOnClose
+        width={800}
+      >
+        <EditRoom onCancel={() => setIsEditing(false)} onFinish={() => {}} />
       </Modal>
     </Content>
   )

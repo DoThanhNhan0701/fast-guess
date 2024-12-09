@@ -1,7 +1,7 @@
 import { useState, useRef, useLayoutEffect } from 'react'
 
 interface WebSocketMessage {
-  action: 'submit' | 'start_game'
+  action: 'submit' | 'start_game' | 'change_role' | 'judgment'
   [key: string]: any
 }
 
