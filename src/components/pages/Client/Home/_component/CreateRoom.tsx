@@ -64,17 +64,18 @@ export default function CreateRoom({ open, handelClose, renderUI }: Props) {
   }
 
   const handleCreateRoom = () => {
-    const totalImages = listTopicId.reduce((total, id) => {
-      const topic =
-        listTopic.find((_topic) => _topic.id === id) ||
-        systemTopics.find((_topic) => _topic.id === id)
+    const minImagesCount = Math.min(
+      ...listTopicId.map((id) => {
+        const topic =
+          listTopic.find((_topic) => _topic.id === id) ||
+          systemTopics.find((_topic) => _topic.id === id)
 
-      if (topic) return total + topic.count_image
-      return total
-    }, 0)
+        return topic?.count_image ?? 0
+      }),
+    )
 
-    if (totalImages < +timeOut) {
-      message.warning(`Time must less than or equal total images (${totalImages})`)
+    if (minImagesCount < +timeOut) {
+      message.warning(`Time must less than or equal total images (${minImagesCount})`)
       return
     }
 

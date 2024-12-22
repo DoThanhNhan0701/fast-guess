@@ -1,4 +1,15 @@
-type WsEventType = 'start' | 'question' | 'turn' | 'error' | 'end' | 'user_joined' | 'change_role'
+type WsEventType =
+  | 'start'
+  | 'question'
+  | 'turn'
+  | 'error'
+  | 'end'
+  | 'user_joined'
+  | 'change_role'
+  | 'judgment'
+  | 'ready_game'
+  | 'out_room'
+  | 'cancel_playing'
 
 export interface IRoom {
   id: string
@@ -61,6 +72,7 @@ interface IUserJoin {
   players: string[]
   examiner?: null | string
   role?: 'player' | 'examiner'
+  owner_room: string
 }
 
 type IChangeRole = {
@@ -75,6 +87,29 @@ type IChangeRole = {
     }
 )
 
+interface IJudgment {
+  type: 'judgment'
+  judgment: 'correct' | 'incorrect'
+}
+
+interface IReadyGame {
+  type: 'ready_game'
+  rate: string
+  all_ready: boolean
+  user: string
+}
+
+interface IOutRoom {
+  type: 'out_room'
+  owner_room: string
+  username: string
+}
+
+interface ICancelPlaying {
+  type: 'cancel_playing'
+  reason: string
+}
+
 type WsEvent<T extends WsEventType> = T extends 'start'
   ? IStartGame
   : T extends 'question'
@@ -87,6 +122,14 @@ type WsEvent<T extends WsEventType> = T extends 'start'
   ? IUserJoin
   : T extends 'change_role'
   ? IChangeRole
+  : T extends 'judgment'
+  ? IJudgment
+  : T extends 'ready_game'
+  ? IReadyGame
+  : T extends 'out_room'
+  ? IOutRoom
+  : T extends 'cancel_playing'
+  ? ICancelPlaying
   : IEnd
 
 export type TWsEvent<T extends WsEventType> = WsEvent<T>

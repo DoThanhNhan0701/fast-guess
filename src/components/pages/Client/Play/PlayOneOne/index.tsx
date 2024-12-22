@@ -6,7 +6,7 @@ import { twMerge } from 'tailwind-merge'
 import { Col, Flex, Image, message, Modal, Row, Spin } from 'antd'
 import { HomeOutlined, SettingOutlined } from '@ant-design/icons'
 import { FaLongArrowAltLeft, FaLongArrowAltRight } from 'react-icons/fa'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
 import { useWebSocket } from '~/hook/useWebSocket'
 import { useCountDown } from '~/hook/useCountDown'
@@ -20,16 +20,24 @@ import Content from '~/components/common/Content'
 import Input from '~/components/common/Input'
 import { Topic } from '../../Setting'
 import EditRoom from '../_component/EditRoom'
+import BgPlaySound from '~/components/common/BgPlaySound'
+import { actionPlaySound } from '~/store/slice/app'
+import NextTopic from '../_component/NextTopic'
 
 export default function PlayOneOne() {
   const router = useRouter()
   const { id: roomID } = useParams()
-  const wsUrl = `ws://${new URL(domainSocket ?? '').host}/ws/game/${roomID}/?token=${accessToken}`
+  const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${
+    new URL(domainSocket ?? '').host
+  }/ws/game/${roomID}/?token=${accessToken}`
   const { userInfo } = useSelector((state: RootState) => state.auth)
+  const dispatch = useDispatch()
   const [roomData, setRoomData] = useState<IRoom | null>(null)
   const [roomTopic, setRoomTopic] = useState<null | Topic>(null)
   const [answer, setAnswer] = useState('')
   const [opponent, setOpponent] = useState<string | null>(null)
+  const [owner, setOwner] = useState<string | null>(null)
+  const [opponentAvatar, setOpponentAvatar] = useState<null | string | '_'>(null)
 
   const [currentStatus, setCurrentStatus] = useState<'NEED_START' | 'WAITING' | null>(null)
 
@@ -43,6 +51,8 @@ export default function PlayOneOne() {
     'notAvailable' | 'waiting_opponent' | 'waiting_start' | 'playing'
   >('notAvailable')
   const [isEditing, setIsEditing] = useState(false)
+  const [currentTopicIndex, setCurrentTopicIndex] = useState<number>(0)
+  const [isReadyForNextTopic, setIsReadyForNextTopic] = useState(false)
 
   const handleSwitchTurn = () => {
     if (!player2CountDown.isRunning) {
@@ -60,11 +70,16 @@ export default function PlayOneOne() {
     switch (data.type) {
       case 'start':
         setCurrentStatus(null)
+        setAnswer('')
         setStatus('playing')
         message.success(data.message)
-        setOpponent(data.players.find((name) => name !== userInfo!.username)!)
+        // setOpponent(data.players.find((name) => name !== userInfo!.username)!)
         if (data.current_turn === userInfo?.username) player1CountDown.startCountDown()
         else player2CountDown.startCountDown()
+        setCurrentTopicIndex((prev) => prev + 1)
+        player1CountDown.setTime(roomData?.time || 1)
+        player2CountDown.setTime(roomData?.time || 1)
+        setIsReadyForNextTopic(false)
         break
 
       case 'question':
@@ -72,20 +87,45 @@ export default function PlayOneOne() {
         break
 
       case 'error':
-        message.error(data.message)
-        setIsError(true)
+        if (player1CountDown.isRunning) {
+          message.error(data.message)
+          dispatch(actionPlaySound('wrong'))
+          setIsError(true)
+        }
         break
       case 'turn':
+        if (player1CountDown.isRunning) {
+          dispatch(actionPlaySound('correct'))
+        }
         setAnswer('')
         handleSwitchTurn()
         message.success(data.message)
         break
 
       case 'user_joined':
+        setOwner(data.owner_room)
         if (data.players?.[0]) {
-          setOpponent(data.players[0])
+          // setOpponent(data.username)
+          if (userInfo?.username === data.owner_room) setStatus('waiting_start')
+        }
+
+        if (data.username !== userInfo?.username) {
+          setOpponent(data.username)
+        } else setOpponent(data.players[0])
+        break
+
+      case 'ready_game':
+        if (data.all_ready) {
           if (userInfo?.username === roomData?.created_by.username) setStatus('waiting_start')
         }
+
+        break
+
+      case 'out_room':
+        setOpponent(null)
+        setOpponentAvatar(null)
+        setStatus('notAvailable')
+        setOwner(data.owner_room)
         break
 
       case 'end':
@@ -94,7 +134,11 @@ export default function PlayOneOne() {
     }
   }
 
-  const { sendMessage } = useWebSocket(wsUrl, handleMessage)
+  const { sendMessage } = useWebSocket(wsUrl, handleMessage, {
+    onError: () => {
+      router.replace('/home')
+    },
+  })
 
   useEffect(() => {
     ;(async () => {
@@ -105,6 +149,9 @@ export default function PlayOneOne() {
         setRoomData(response)
         const roomTopic = await getRequest<Topic>(`${endpointBase.TOPIC}${response.topics[0]}/`)
         setRoomTopic(roomTopic)
+        if (response.created_by.username !== userInfo?.username) {
+          setOpponent(response.created_by.username)
+        }
       } catch (error) {}
     })()
   }, [])
@@ -112,6 +159,19 @@ export default function PlayOneOne() {
   useEffect(() => {
     if (roomData && roomData.created_by.username !== userInfo?.username) setCurrentStatus('WAITING')
   }, [roomData])
+
+  useEffect(() => {
+    if (opponent && !opponentAvatar) {
+      ;(async () => {
+        try {
+          const response = await getRequest<{ avatar: null | string }>(
+            `${endpointBase.USER}${opponent}/`,
+          )
+          setOpponentAvatar(response.avatar ?? '_')
+        } catch (error) {}
+      })()
+    }
+  }, [opponent])
 
   const handleSubmit = () => {
     if (!answer.trim()) {
@@ -126,6 +186,8 @@ export default function PlayOneOne() {
   }
 
   const handleStart = () => {
+    console.log('call start')
+
     sendMessage({
       action: 'start_game',
     })
@@ -166,8 +228,11 @@ export default function PlayOneOne() {
             width={74}
             height={74}
             preview={false}
-            className="rounded-xl"
-            src="https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg"
+            className="rounded-xl object-cover"
+            src={
+              userInfo?.avatar ??
+              'https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg'
+            }
           />
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">
             {userInfo?.username}
@@ -230,8 +295,12 @@ export default function PlayOneOne() {
             width={74}
             height={74}
             preview={false}
-            className="rounded-xl"
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDso3YjdjeD_8tA6vVacoI3ogd6YqF-VfyGiylBV2v6-zitJretXOtsLvJ5UZDrlNs7nc&usqp=CAU"
+            className="rounded-xl object-cover"
+            src={
+              !opponentAvatar || opponentAvatar === '_'
+                ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDso3YjdjeD_8tA6vVacoI3ogd6YqF-VfyGiylBV2v6-zitJretXOtsLvJ5UZDrlNs7nc&usqp=CAU'
+                : opponentAvatar
+            }
           />
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl">
             {opponent ?? '...'}
@@ -262,6 +331,7 @@ export default function PlayOneOne() {
                 isError && 'border-red-500',
               )}
               value={answer}
+              disabled={!player1CountDown.isRunning}
               onChange={(e) => {
                 setAnswer(e.target.value)
                 setIsError(false)
@@ -291,15 +361,24 @@ export default function PlayOneOne() {
         <div className="max-w-[40%] m-auto">
           <Flex className="gap-6 mt-10">
             <Button
+              className="w-full"
+              type="primary"
+              disabled={!player1CountDown.isRunning}
+              onClick={() =>
+                sendMessage({
+                  action: 'next_question',
+                })
+              }
+            >
+              Next
+            </Button>
+            <Button
               onClick={handleSubmit}
               className="w-full"
               type="default"
               disabled={!player1CountDown.isRunning}
             >
               Submit
-            </Button>
-            <Button className="w-full" type="primary" disabled={!player1CountDown.isRunning}>
-              Next
             </Button>
           </Flex>
         </div>
@@ -333,14 +412,29 @@ export default function PlayOneOne() {
         destroyOnClose
         footer={
           <Flex justify="space-between" align="center" className="pt-6 pb-2">
-            <Button>Ready (1/2)</Button>
+            <Button>
+              Ready ({currentTopicIndex}/{roomData?.topics.length})
+            </Button>
             <Flex gap={16}>
               <Button className="w-32" onClick={() => router.replace('/home')}>
                 Quit
               </Button>
-              <Button type="primary" className="w-32">
-                Play
-              </Button>
+              {currentTopicIndex !== roomData?.topics.length && (
+                <Button
+                  type="primary"
+                  className="w-32"
+                  disabled={isReadyForNextTopic}
+                  onClick={() => {
+                    sendMessage({
+                      action: 'ready',
+                    })
+                    setIsReadyForNextTopic(true)
+                    setResult(null)
+                  }}
+                >
+                  Play
+                </Button>
+              )}
             </Flex>
           </Flex>
         }
@@ -349,26 +443,9 @@ export default function PlayOneOne() {
           <p className={`${result === 'WIN' ? 'text-green-600' : ''}`}>YOU {result}</p>
           <p className="border rounded-full px-3 py-2">+ {result === 'WIN' ? '20' : '0'}elo</p>
         </Flex>
-        <div className="rounded-3xl border p-5">
-          <p className="text-center">NEXT TOPIC</p>
-
-          <div className="flex justify-center">
-            <Image
-              preview={false}
-              className="object-cover mx-auto block"
-              src="https://img.freepik.com/free-vector/flags-different-countries-speech-bubble-shape_23-2147862139.jpg?semt=ais_hybrid"
-              width={200}
-              height={200}
-              alt=""
-            />
-          </div>
-
-          <p className="text-2xl font-bold text-center mt-2">
-            300 Images
-            <br />
-            Animal
-          </p>
-        </div>
+        {currentTopicIndex !== roomData?.topics.length && (
+          <NextTopic id={roomData?.topics[currentTopicIndex]} />
+        )}
       </Modal>
 
       <Modal
@@ -380,6 +457,7 @@ export default function PlayOneOne() {
       >
         <EditRoom onCancel={() => setIsEditing(false)} onFinish={() => {}} />
       </Modal>
+      <BgPlaySound />
     </Content>
   )
 }

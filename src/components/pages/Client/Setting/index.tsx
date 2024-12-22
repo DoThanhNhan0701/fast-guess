@@ -1,7 +1,7 @@
 'use client'
 
 import { HomeOutlined, UploadOutlined } from '@ant-design/icons'
-import { Button, Flex, Image, message, Popconfirm, Upload } from 'antd'
+import { Button, Flex, Image, message, Popconfirm, Tooltip, Upload } from 'antd'
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import { FaPlus, FaRegTrashAlt } from 'react-icons/fa'
@@ -14,6 +14,8 @@ import CreateTopic from './_component/CreateTopic'
 import Content from '~/components/common/Content'
 import useModal from '~/hook/useModal'
 import { actionUpdatePartial } from '~/store/slice/auth'
+import { MdMusicNote, MdMusicOff } from 'react-icons/md'
+import { actionChangeMute } from '~/store/slice/app'
 
 export interface Topic {
   id: string
@@ -25,9 +27,10 @@ export interface Topic {
 export const baseUrl = `https://be.onechamp.id.vn`
 
 export default function SettingPage() {
-  const distc = useDispatch()
   const router = useRouter()
   const { userInfo } = useSelector((state: RootState) => state.auth)
+  const { mute } = useSelector((state: RootState) => state.app)
+  const dispatch = useDispatch()
   const [listTopic, setListTopic] = useState<Topic[]>([])
   const { isOpen, closeModal, openModal } = useModal()
   const [isRender, setIsRender] = useState(false)
@@ -71,7 +74,7 @@ export default function SettingPage() {
       )
       if (response) {
         setAvatar(`${baseUrl}/${response.data.avatar}`)
-        distc(
+        dispatch(
           actionUpdatePartial({
             avatar: `${baseUrl}/${response.data.avatar}`,
           }),
@@ -131,6 +134,17 @@ export default function SettingPage() {
             <p className="font-bold text-base">{`Username: ${userInfo?.username}`}</p>
             <p className="font-bold text-base">{`Email:  ${userInfo?.email}`}</p>
             <p className="font-bold text-base">Language: English</p>
+            <Flex className="mt-3" justify="end" gap={8}>
+              <Tooltip title="Sound">
+                <Button
+                  icon={mute ? <MdMusicOff /> : <MdMusicNote />}
+                  className="text-xl"
+                  size="large"
+                  type="primary"
+                  onClick={() => dispatch(actionChangeMute(!mute))}
+                ></Button>
+              </Tooltip>
+            </Flex>
           </div>
         </div>
         <h1 className="text-center py-6 text-2xl font-bold">Personal Topic</h1>

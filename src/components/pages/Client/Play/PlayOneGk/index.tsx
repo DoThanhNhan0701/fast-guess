@@ -4,49 +4,57 @@ import { useParams, useRouter } from 'next/navigation'
 import { Col, Flex, Image, Modal, Row, Tooltip, message } from 'antd'
 import { HomeOutlined, SettingOutlined } from '@ant-design/icons'
 import { FaLongArrowAltLeft, FaLongArrowAltRight } from 'react-icons/fa'
+import { twMerge } from 'tailwind-merge'
 
 import Button from '~/components/common/Button'
 import Content from '~/components/common/Content'
-import Input from '~/components/common/Input'
 import { accessToken, domainSocket } from '~/helper/contant'
 import { useWebSocket } from '~/hook/useWebSocket'
 import { IRoom, TWsEvent } from '~/models/common'
 import { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '~/store'
 import { useCountDown } from '~/hook/useCountDown'
 import { Topic } from '../../Setting'
 import { getRequest } from '~/services/request'
 import { endpointBase } from '~/services/endpoint'
-import { twMerge } from 'tailwind-merge'
+import { actionPlaySound } from '~/store/slice/app'
+import BgPlaySound from '~/components/common/BgPlaySound'
+import NextTopic from '../_component/NextTopic'
 
 export default function PlayOneGk() {
   const router = useRouter()
   const { id: roomID } = useParams()
 
   const { userInfo } = useSelector((state: RootState) => state.auth)
+  const dispatch = useDispatch()
   const [roomData, setRoomData] = useState<IRoom | null>(null)
   const [roomTopic, setRoomTopic] = useState<null | Topic>(null)
 
-  const [currentStatus, setCurrentStatus] = useState<'NEED_START' | 'WAITING' | null>(null)
   const [currentRole, setCurrentRole] = useState<'player' | 'examiner' | null>(null)
   const [currentImage, setCurrentImage] = useState<string | null>(null)
   const [isError, setIsError] = useState(false)
-  const [answer, setAnswer] = useState('')
   const [status, setStatus] = useState<
     'notAvailable' | 'waiting_opponent' | 'waiting_start' | 'playing'
   >('notAvailable')
+  const [owner, setOwner] = useState<string | null>(null)
   const [winner, setWinner] = useState<string | null>(null)
+  const [readyRate, setReadyRate] = useState<string | null>(null)
+  const [isCanceled, setIsCanceled] = useState(false)
+
+  const [userAvatarMapping, setUserAvatarMapping] = useState<Record<string, string | null>>({})
 
   const [users, setUsers] = useState<{
-    gk: null | any
-    user1: null | any
-    user2: null | any
+    gk: null | string
+    user1: null | string
+    user2: null | string
   }>({
     gk: null,
     user1: null,
     user2: null,
   })
+  const [currentTopicIndex, setCurrentTopicIndex] = useState<number>(0)
+  const [isReadyForNextTopic, setIsReadyForNextTopic] = useState(false)
 
   const player1CountDown = useCountDown(roomData?.time || 61)
   const player2CountDown = useCountDown(roomData?.time || 61)
@@ -61,14 +69,20 @@ export default function PlayOneGk() {
     }
   }
 
+  const resetCountDown = () => {
+    player1CountDown.setTime(roomData!.time)
+    player2CountDown.setTime(roomData!.time)
+  }
+
   const handleMessage = (data: TWsEvent<any>) => {
     console.log(data)
 
     switch (data.type) {
       case 'start':
-        setCurrentStatus(null)
         message.success(data.message)
         setStatus('playing')
+        setCurrentTopicIndex((prev) => prev + 1)
+        setIsReadyForNextTopic(false)
 
         if (data.current_turn === users.user1) player1CountDown.startCountDown()
         else if (data.current_turn === users.user2) player2CountDown.startCountDown()
@@ -82,15 +96,21 @@ export default function PlayOneGk() {
       case 'error':
         message.error(data.message)
         setIsError(true)
+        setTimeout(() => {
+          setIsError(false)
+        }, 1000)
         break
       case 'turn':
-        setAnswer('')
+        if (player1CountDown.isRunning || player2CountDown.isRunning) {
+          dispatch(actionPlaySound('correct'))
+        }
         handleSwitchTurn()
         message.success(data.message)
         break
 
       case 'user_joined':
-        setCurrentRole(data.role!)
+        setOwner(data.owner_room)
+        if (data.username === userInfo?.username) setCurrentRole(data.role!)
         if (data.role === 'examiner') {
           setUsers((prev) => {
             if (data.players[0]) prev.user1 = data.players[0]
@@ -108,6 +128,7 @@ export default function PlayOneGk() {
               ...prev,
               user1: data.username,
               user2: data.players[0] || null,
+              gk: data.examiner ?? null,
             }
           })
         }
@@ -121,21 +142,17 @@ export default function PlayOneGk() {
           }
 
           if (data.new_role === 'examiner') {
-            setUsers((prev) => {
-              if (users.user1 === data.user) return { ...prev, gk: data.user, user1: null }
-              return { ...prev, gk: data.user, user2: null }
-            })
+            setUsers((prev) => ({
+              gk: data.user,
+              user1: prev.user1 === data.user ? null : prev.user1,
+              user2: prev.user2 === data.user ? null : prev.user2,
+            }))
           } else {
             setUsers((prev) => {
-              if (prev.user1)
-                return {
-                  ...prev,
-                  user2: data.user,
-                }
-              return {
-                ...prev,
-                user1: data.user,
-              }
+              prev.gk = null
+              if (!prev.user1) prev.user1 = data.user
+              else prev.user2 = data.user
+              return { ...prev }
             })
           }
         }
@@ -143,14 +160,69 @@ export default function PlayOneGk() {
         break
       }
 
+      case 'judgment':
+        if (data.judgment === 'incorrect') {
+          setIsError(true)
+          setTimeout(() => {
+            setIsError(false)
+          }, 1000)
+        }
+
+        if (
+          (player1CountDown.isRunning && users.user1 === userInfo?.username) ||
+          (player2CountDown.isRunning && users.user2 === userInfo?.username)
+        )
+          if (data.judgment === 'incorrect') dispatch(actionPlaySound('wrong'))
+          else dispatch(actionPlaySound('correct'))
+
+        break
+
+      case 'ready_game':
+        setReadyRate(data.rate)
+        if (data.all_ready) {
+          if (userInfo?.username === roomData?.created_by.username) setStatus('waiting_start')
+          else setStatus('notAvailable')
+          resetCountDown()
+        } else setStatus('notAvailable')
+
+        break
+
+      case 'out_room':
+        setOwner(data.owner_room)
+        for (const key in users) {
+          const _key = key as keyof typeof users
+          if (users[_key] === data.username) {
+            setUsers((prev) => ({
+              ...prev,
+              [_key]: null,
+            }))
+            break
+          }
+        }
+        break
+
+      case 'cancel_playing':
+        player1CountDown.pauseCountDown()
+        player2CountDown.pauseCountDown()
+        setIsCanceled(true)
+        break
+
       case 'end':
         setWinner(data.winner)
     }
   }
 
+  const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${
+    new URL(domainSocket ?? '').host
+  }/ws/game/${roomID}/?token=${accessToken}`
+
   const { sendMessage } = useWebSocket(
-    `ws://${new URL(domainSocket ?? '').host}/ws/game/${roomID}/?token=${accessToken}`,
+    // `ws://${new URL(domainSocket ?? '').host}/ws/game/${roomID}/?token=${accessToken}`,
+    wsUrl,
     handleMessage,
+    {
+      onError: () => router.replace('/home'),
+    },
   )
 
   useEffect(() => {
@@ -167,15 +239,31 @@ export default function PlayOneGk() {
   }, [])
 
   useEffect(() => {
-    if (
-      users.gk &&
-      users.user1 &&
-      users.user2 &&
-      userInfo?.username === roomData?.created_by.username
-    ) {
+    if (users.gk && users.user1 && users.user2 && userInfo?.username === owner) {
       setStatus('waiting_start')
-    }
+    } else setStatus('notAvailable')
   }, [userInfo, users, roomData])
+
+  useEffect(() => {
+    for (const key in users) {
+      const userName = users[key as keyof typeof users]
+      if (userName) {
+        if (!userAvatarMapping[userName]) {
+          ;(async () => {
+            try {
+              const response = await getRequest<{ avatar: string | null }>(
+                `${endpointBase.USER}${userName}/`,
+              )
+              setUserAvatarMapping((prev) => ({
+                ...prev,
+                [userName]: response.avatar ?? '_',
+              }))
+            } catch (error) {}
+          })()
+        }
+      }
+    }
+  }, [users])
 
   const handleStart = () => {
     console.log('start game')
@@ -194,12 +282,28 @@ export default function PlayOneGk() {
   }
 
   const handleJudgment = (judgment: 'correct' | 'incorrect') => {
-    console.log(judgment)
-
     sendMessage({
       action: 'judgment',
       judgment,
     })
+  }
+
+  const getAvatarUser = (userName: string | null, role: 'user1' | 'user2' | 'examiner') => {
+    const avatarDefaults = {
+      user1:
+        'https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg',
+      user2:
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDso3YjdjeD_8tA6vVacoI3ogd6YqF-VfyGiylBV2v6-zitJretXOtsLvJ5UZDrlNs7nc&usqp=CAU',
+      examiner:
+        'https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg',
+    }
+
+    const avatar = userAvatarMapping[userName ?? '']
+    if (!avatar || avatar === '_') {
+      return avatarDefaults[role]
+    }
+
+    return avatar
   }
 
   return (
@@ -223,15 +327,28 @@ export default function PlayOneGk() {
       <Row align={'middle'} className="justify-center mb-10">
         <Col
           span={5}
-          className="flex items-center justify-center flex-col gap-2 border-[2px] p-6 max-w-[200px] rounded-2xl"
+          className={twMerge(
+            'flex items-center justify-center flex-col gap-2 border-[2px] p-6 max-w-[200px] rounded-2xl',
+            player1CountDown.isRunning && 'border-gray-900 shadow-gray-300',
+            isError && player1CountDown.isRunning && 'border-red-500 shadow shadow-red-300',
+          )}
         >
-          <Image
-            width={74}
-            height={74}
-            preview={false}
-            className="rounded-xl"
-            src="https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg"
-          />
+          {currentRole === 'examiner' && !users.user1 ? (
+            <Tooltip title="Select this role (player)">
+              <button
+                className="w-[74px] aspect-square rounded-full bg-gray-300"
+                onClick={() => handleChangeRole('player')}
+              ></button>
+            </Tooltip>
+          ) : (
+            <Image
+              width={74}
+              height={74}
+              preview={false}
+              className="rounded-xl object-cover"
+              src={getAvatarUser(users.user1, 'user1')}
+            />
+          )}
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">
             {users.user1}
           </p>
@@ -283,15 +400,28 @@ export default function PlayOneGk() {
 
         <Col
           span={5}
-          className="flex items-center justify-center flex-col gap-2 border-[2px] p-6 max-w-[200px] rounded-2xl"
+          className={twMerge(
+            'flex items-center justify-center flex-col gap-2 border-[2px] p-6 max-w-[200px] rounded-2xl',
+            player2CountDown.isRunning && 'border-gray-900 shadow-gray-300',
+            isError && player2CountDown.isRunning && 'border-red-500 shadow shadow-red-300',
+          )}
         >
-          <Image
-            width={74}
-            height={74}
-            preview={false}
-            className="rounded-xl"
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDso3YjdjeD_8tA6vVacoI3ogd6YqF-VfyGiylBV2v6-zitJretXOtsLvJ5UZDrlNs7nc&usqp=CAU"
-          />
+          {currentRole === 'examiner' && !users.user2 ? (
+            <Tooltip title="Select this role (player)">
+              <button
+                className="w-[74px] aspect-square rounded-full bg-gray-300"
+                onClick={() => handleChangeRole('player')}
+              ></button>
+            </Tooltip>
+          ) : (
+            <Image
+              width={74}
+              height={74}
+              preview={false}
+              className="rounded-xl object-cover"
+              src={getAvatarUser(users.user2, 'user2')}
+            />
+          )}
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl">
             {users.user2}
           </p>
@@ -317,6 +447,14 @@ export default function PlayOneGk() {
       {status === 'playing' ? (
         users.gk === userInfo?.username && (
           <div className="max-w-[40%] m-auto">
+            <p className="text-center text-xl">
+              Answer:{' '}
+              <strong>
+                {decodeURIComponent(
+                  currentImage?.split('/').pop()?.split('.').shift() ?? '',
+                ).replaceAll('_', ' ')}
+              </strong>
+            </p>
             <Flex className="gap-6 mt-10">
               <Button className="w-full" type="primary" onClick={() => handleJudgment('correct')}>
                 Right
@@ -326,7 +464,11 @@ export default function PlayOneGk() {
               </Button>
             </Flex>
             <Button
-              onClick={() => router.push('/play-one-gk/4/result')}
+              onClick={() =>
+                sendMessage({
+                  action: 'next_question',
+                })
+              }
               className="w-full mt-6"
               type="primary"
             >
@@ -335,37 +477,44 @@ export default function PlayOneGk() {
           </div>
         )
       ) : (
-        <Flex className="w-2/5 mx-auto gap-6 mt-14">
-          <Button
-            className="w-full"
-            type="primary"
-            disabled={status !== 'waiting_start'}
-            loading={status === 'waiting_opponent'}
-            onClick={handleStart}
-          >
-            Play
-          </Button>
-          <Button
-            className="w-full"
-            disabled={status === 'waiting_opponent'}
-            onClick={() => {
-              router.replace('/home')
-            }}
-          >
-            Quit
-          </Button>
-        </Flex>
+        <>
+          {!!readyRate && (
+            <p className={twMerge('text-xl text-center', readyRate === '3/3' && 'text-green-700')}>
+              Ready: <strong>{readyRate}</strong>
+            </p>
+          )}
+          <Flex className="w-2/5 mx-auto gap-6 mt-14">
+            <Button
+              className="w-full"
+              type="primary"
+              disabled={status !== 'waiting_start'}
+              loading={status === 'waiting_opponent'}
+              onClick={handleStart}
+            >
+              Play
+            </Button>
+            <Button
+              className="w-full"
+              disabled={status === 'waiting_opponent'}
+              onClick={() => {
+                router.replace('/home')
+              }}
+            >
+              Quit
+            </Button>
+          </Flex>
+        </>
       )}
 
       <Flex justify="center" className="mt-8">
         <div className="flex items-center justify-center flex-col gap-2 border-[2px] p-6 max-w-[200px] rounded-2xl min-w-48">
-          {currentRole === 'examiner' ? (
+          {users.gk ? (
             <Image
               width={74}
               height={74}
               preview={false}
-              className="rounded-xl"
-              src="https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg"
+              className="rounded-xl object-cover"
+              src={getAvatarUser(users.gk, 'examiner')}
             />
           ) : (
             <Tooltip title="Select this role (gk)">
@@ -389,14 +538,29 @@ export default function PlayOneGk() {
         destroyOnClose
         footer={
           <Flex justify="space-between" align="center" className="pt-6 pb-2">
-            <Button>Ready (1/2)</Button>
+            <Button>
+              Ready ({currentTopicIndex}/{roomData?.topics.length})
+            </Button>
             <Flex gap={16}>
               <Button className="w-32" onClick={() => router.replace('/home')}>
                 Quit
               </Button>
-              <Button type="primary" className="w-32">
-                Play
-              </Button>
+              {currentTopicIndex !== roomData?.topics.length && (
+                <Button
+                  type="primary"
+                  className="w-32"
+                  disabled={isReadyForNextTopic}
+                  onClick={() => {
+                    sendMessage({
+                      action: 'ready',
+                    })
+                    setIsReadyForNextTopic(true)
+                    setWinner(null)
+                  }}
+                >
+                  Play
+                </Button>
+              )}
             </Flex>
           </Flex>
         }
@@ -417,27 +581,26 @@ export default function PlayOneGk() {
             </>
           )}
         </Flex>
-        <div className="rounded-3xl border p-5">
-          <p className="text-center">NEXT TOPIC</p>
-
-          <div className="flex justify-center">
-            <Image
-              preview={false}
-              className="object-cover mx-auto block"
-              src="https://img.freepik.com/free-vector/flags-different-countries-speech-bubble-shape_23-2147862139.jpg?semt=ais_hybrid"
-              width={200}
-              height={200}
-              alt=""
-            />
-          </div>
-
-          <p className="text-2xl font-bold text-center mt-2">
-            300 Images
-            <br />
-            Animal
-          </p>
-        </div>
+        {currentTopicIndex !== roomData?.topics.length && (
+          <NextTopic id={roomData?.topics[currentTopicIndex]} />
+        )}
       </Modal>
+      <Modal
+        open={isCanceled}
+        destroyOnClose
+        centered
+        closeIcon={null}
+        footer={
+          <Button className="w-32" onClick={() => router.replace('/home')}>
+            Quit
+          </Button>
+        }
+      >
+        <p className="text-center text-xl font-semibold text-balance">
+          The <strong>Examiner has gone. The match has been canceled!!!</strong>
+        </p>
+      </Modal>
+      <BgPlaySound />
     </Content>
   )
 }
