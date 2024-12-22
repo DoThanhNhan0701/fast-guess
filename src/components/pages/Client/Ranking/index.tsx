@@ -2,67 +2,70 @@
 
 import { HomeOutlined } from '@ant-design/icons'
 import { Avatar, Table, TableColumnsType } from 'antd'
+import { useEffect, useState } from 'react'
 import Content from '~/components/common/Content'
+import { endpointBase } from '~/services/endpoint'
+import { getRequest } from '~/services/request'
 
-interface RankingData {
-  key: number
-  rank: number
+interface Ranking {
+  avatar: string | null
+  email: string
+  first_name: string
+  id: string
+  last_name: string
+  score: number
   username: string
-  elo: string
-  avatar: string
 }
 
 export default function Ranking() {
-  const columns: TableColumnsType<RankingData> = [
+  const [loading, setLoading] = useState<boolean>(false)
+  const [ranking, setRanking] = useState<Ranking[]>([])
+
+  const columns: TableColumnsType<Ranking> = [
     {
-      title: 'tt',
+      title: 'No',
       dataIndex: 'rank',
       key: 'rank',
       align: 'center',
+      width: '5%',
+      render: (text: string, record: Ranking, index: number) => <div>{index + 1}</div>,
     },
     {
-      title: 'username',
+      title: 'Username',
       dataIndex: 'username',
       key: 'username',
       align: 'center',
-      render: (text: string, record: RankingData) => (
+      render: (text: string, record: Ranking) => (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Avatar src={record.avatar} style={{ marginRight: '8px' }} />
+          <Avatar
+            className="border"
+            src={record?.avatar ? record.avatar : 'https://api.dicebear.com/7.x/miniavs/svg?seed=1'}
+            style={{ marginRight: '8px' }}
+          />
           {text}
         </div>
       ),
     },
     {
-      title: 'elo',
-      dataIndex: 'elo',
-      key: 'elo',
+      title: 'Elo',
+      dataIndex: 'score',
+      key: 'score',
       align: 'center',
+      render: (text: string, record: Ranking, index: number) => <div>{record.score} Point</div>,
     },
   ]
 
-  const data: RankingData[] = [
-    {
-      key: 1,
-      rank: 1,
-      username: 'abc',
-      elo: '1000 points',
-      avatar: 'https://i.pravatar.cc/50?img=1',
-    },
-    {
-      key: 2,
-      rank: 2,
-      username: 'abcd',
-      elo: '1000 points',
-      avatar: 'https://i.pravatar.cc/50?img=2',
-    },
-    {
-      key: 3,
-      rank: 3,
-      username: 'abcde',
-      elo: '1000 points',
-      avatar: 'https://i.pravatar.cc/50?img=3',
-    },
-  ]
+  useEffect(() => {
+    setLoading(true)
+    getRequest(`${endpointBase.USER}`)
+      .then((e: any) => {
+        setRanking(e || [])
+        setLoading(false)
+      })
+      .catch((e) => {
+        setLoading(false)
+      })
+  }, [])
 
   return (
     <Content
@@ -78,8 +81,9 @@ export default function Ranking() {
     >
       <div style={{ padding: '20px' }}>
         <Table
+          loading={loading}
           columns={columns}
-          dataSource={data}
+          dataSource={ranking}
           pagination={{ pageSize: 5 }}
           bordered
           rowClassName={() => 'ranking-row'}

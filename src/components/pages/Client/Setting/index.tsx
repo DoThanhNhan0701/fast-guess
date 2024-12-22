@@ -67,7 +67,7 @@ export default function SettingPage() {
         <div className="max-w-[500px] m-auto p-6 border-[2px] border-[rgb(96,_11,_118)] rounded-2xl">
           <Flex justify="space-between">
             <p className="font-bold text-base">{`ID: ${userInfo?.id}`}</p>
-            <p className="font-bold text-base">Elo: 1000</p>
+            <p className="font-bold text-base">{`Elo: ${userInfo?.score}`}</p>
           </Flex>
           <h4 className="py-4 font-extrabold text-2xl text-center uppercase">Setting User</h4>
           <div className="flex justify-center w-full">
