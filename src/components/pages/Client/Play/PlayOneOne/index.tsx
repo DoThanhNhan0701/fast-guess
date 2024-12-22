@@ -6,7 +6,7 @@ import { twMerge } from 'tailwind-merge'
 import { Col, Flex, Image, message, Modal, Row, Spin } from 'antd'
 import { HomeOutlined, SettingOutlined } from '@ant-design/icons'
 import { FaLongArrowAltLeft, FaLongArrowAltRight } from 'react-icons/fa'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
 import { useWebSocket } from '~/hook/useWebSocket'
 import { useCountDown } from '~/hook/useCountDown'
@@ -20,12 +20,18 @@ import Content from '~/components/common/Content'
 import Input from '~/components/common/Input'
 import { Topic } from '../../Setting'
 import EditRoom from '../_component/EditRoom'
+import BgPlaySound from '~/components/common/BgPlaySound'
+import { actionPlaySound } from '~/store/slice/app'
+import NextTopic from '../_component/NextTopic'
 
 export default function PlayOneOne() {
   const router = useRouter()
   const { id: roomID } = useParams()
-  const wsUrl = `ws://${new URL(domainSocket ?? '').host}/ws/game/${roomID}/?token=${accessToken}`
+  const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${
+    new URL(domainSocket ?? '').host
+  }/ws/game/${roomID}/?token=${accessToken}`
   const { userInfo } = useSelector((state: RootState) => state.auth)
+  const dispatch = useDispatch()
   const [roomData, setRoomData] = useState<IRoom | null>(null)
   const [roomTopic, setRoomTopic] = useState<null | Topic>(null)
   const [answer, setAnswer] = useState('')
@@ -43,6 +49,8 @@ export default function PlayOneOne() {
     'notAvailable' | 'waiting_opponent' | 'waiting_start' | 'playing'
   >('notAvailable')
   const [isEditing, setIsEditing] = useState(false)
+  const [currentTopicIndex, setCurrentTopicIndex] = useState<number>(0)
+  const [isReadyForNextTopic, setIsReadyForNextTopic] = useState(false)
 
   const handleSwitchTurn = () => {
     if (!player2CountDown.isRunning) {
@@ -62,9 +70,13 @@ export default function PlayOneOne() {
         setCurrentStatus(null)
         setStatus('playing')
         message.success(data.message)
-        setOpponent(data.players.find((name) => name !== userInfo!.username)!)
+        // setOpponent(data.players.find((name) => name !== userInfo!.username)!)
         if (data.current_turn === userInfo?.username) player1CountDown.startCountDown()
         else player2CountDown.startCountDown()
+        setCurrentTopicIndex((prev) => prev + 1)
+        player1CountDown.setTime(roomData?.time || 1)
+        player2CountDown.setTime(roomData?.time || 1)
+        setIsReadyForNextTopic(false)
         break
 
       case 'question':
@@ -72,10 +84,16 @@ export default function PlayOneOne() {
         break
 
       case 'error':
-        message.error(data.message)
-        setIsError(true)
+        if (player1CountDown.isRunning) {
+          message.error(data.message)
+          dispatch(actionPlaySound('wrong'))
+          setIsError(true)
+        }
         break
       case 'turn':
+        if (player1CountDown.isRunning) {
+          dispatch(actionPlaySound('correct'))
+        }
         setAnswer('')
         handleSwitchTurn()
         message.success(data.message)
@@ -83,9 +101,16 @@ export default function PlayOneOne() {
 
       case 'user_joined':
         if (data.players?.[0]) {
-          setOpponent(data.players[0])
+          setOpponent(data.username)
           if (userInfo?.username === roomData?.created_by.username) setStatus('waiting_start')
         }
+        break
+
+      case 'ready_game':
+        if (data.all_ready) {
+          if (userInfo?.username === roomData?.created_by.username) setStatus('waiting_start')
+        }
+
         break
 
       case 'end':
@@ -105,6 +130,9 @@ export default function PlayOneOne() {
         setRoomData(response)
         const roomTopic = await getRequest<Topic>(`${endpointBase.TOPIC}${response.topics[0]}/`)
         setRoomTopic(roomTopic)
+        if (response.created_by.username !== userInfo?.username) {
+          setOpponent(response.created_by.username)
+        }
       } catch (error) {}
     })()
   }, [])
@@ -126,6 +154,8 @@ export default function PlayOneOne() {
   }
 
   const handleStart = () => {
+    console.log('call start')
+
     sendMessage({
       action: 'start_game',
     })
@@ -333,14 +363,29 @@ export default function PlayOneOne() {
         destroyOnClose
         footer={
           <Flex justify="space-between" align="center" className="pt-6 pb-2">
-            <Button>Ready (1/2)</Button>
+            <Button>
+              Ready ({currentTopicIndex}/{roomData?.topics.length})
+            </Button>
             <Flex gap={16}>
               <Button className="w-32" onClick={() => router.replace('/home')}>
                 Quit
               </Button>
-              <Button type="primary" className="w-32">
-                Play
-              </Button>
+              {currentTopicIndex !== roomData?.topics.length && (
+                <Button
+                  type="primary"
+                  className="w-32"
+                  disabled={isReadyForNextTopic}
+                  onClick={() => {
+                    sendMessage({
+                      action: 'ready',
+                    })
+                    setIsReadyForNextTopic(true)
+                    setResult(null)
+                  }}
+                >
+                  Play
+                </Button>
+              )}
             </Flex>
           </Flex>
         }
@@ -349,26 +394,9 @@ export default function PlayOneOne() {
           <p className={`${result === 'WIN' ? 'text-green-600' : ''}`}>YOU {result}</p>
           <p className="border rounded-full px-3 py-2">+ {result === 'WIN' ? '20' : '0'}elo</p>
         </Flex>
-        <div className="rounded-3xl border p-5">
-          <p className="text-center">NEXT TOPIC</p>
-
-          <div className="flex justify-center">
-            <Image
-              preview={false}
-              className="object-cover mx-auto block"
-              src="https://img.freepik.com/free-vector/flags-different-countries-speech-bubble-shape_23-2147862139.jpg?semt=ais_hybrid"
-              width={200}
-              height={200}
-              alt=""
-            />
-          </div>
-
-          <p className="text-2xl font-bold text-center mt-2">
-            300 Images
-            <br />
-            Animal
-          </p>
-        </div>
+        {currentTopicIndex !== roomData?.topics.length && (
+          <NextTopic id={roomData?.topics[currentTopicIndex]} />
+        )}
       </Modal>
 
       <Modal
@@ -380,6 +408,7 @@ export default function PlayOneOne() {
       >
         <EditRoom onCancel={() => setIsEditing(false)} onFinish={() => {}} />
       </Modal>
+      <BgPlaySound />
     </Content>
   )
 }

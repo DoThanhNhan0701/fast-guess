@@ -4,27 +4,30 @@ import { useParams, useRouter } from 'next/navigation'
 import { Col, Flex, Image, Modal, Row, Tooltip, message } from 'antd'
 import { HomeOutlined, SettingOutlined } from '@ant-design/icons'
 import { FaLongArrowAltLeft, FaLongArrowAltRight } from 'react-icons/fa'
+import { twMerge } from 'tailwind-merge'
 
 import Button from '~/components/common/Button'
 import Content from '~/components/common/Content'
-import Input from '~/components/common/Input'
 import { accessToken, domainSocket } from '~/helper/contant'
 import { useWebSocket } from '~/hook/useWebSocket'
 import { IRoom, TWsEvent } from '~/models/common'
 import { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '~/store'
 import { useCountDown } from '~/hook/useCountDown'
 import { Topic } from '../../Setting'
 import { getRequest } from '~/services/request'
 import { endpointBase } from '~/services/endpoint'
-import { twMerge } from 'tailwind-merge'
+import { actionPlaySound } from '~/store/slice/app'
+import BgPlaySound from '~/components/common/BgPlaySound'
+import NextTopic from '../_component/NextTopic'
 
 export default function PlayOneGk() {
   const router = useRouter()
   const { id: roomID } = useParams()
 
   const { userInfo } = useSelector((state: RootState) => state.auth)
+  const dispatch = useDispatch()
   const [roomData, setRoomData] = useState<IRoom | null>(null)
   const [roomTopic, setRoomTopic] = useState<null | Topic>(null)
 
@@ -32,7 +35,6 @@ export default function PlayOneGk() {
   const [currentRole, setCurrentRole] = useState<'player' | 'examiner' | null>(null)
   const [currentImage, setCurrentImage] = useState<string | null>(null)
   const [isError, setIsError] = useState(false)
-  const [answer, setAnswer] = useState('')
   const [status, setStatus] = useState<
     'notAvailable' | 'waiting_opponent' | 'waiting_start' | 'playing'
   >('notAvailable')
@@ -47,6 +49,8 @@ export default function PlayOneGk() {
     user1: null,
     user2: null,
   })
+  const [currentTopicIndex, setCurrentTopicIndex] = useState<number>(0)
+  const [isReadyForNextTopic, setIsReadyForNextTopic] = useState(false)
 
   const player1CountDown = useCountDown(roomData?.time || 61)
   const player2CountDown = useCountDown(roomData?.time || 61)
@@ -61,6 +65,12 @@ export default function PlayOneGk() {
     }
   }
 
+  const handleNextTopic = () => {
+    player1CountDown.setTime(roomData!.time)
+    player2CountDown.setTime(roomData!.time)
+    setWinner(null)
+  }
+
   const handleMessage = (data: TWsEvent<any>) => {
     console.log(data)
 
@@ -69,6 +79,8 @@ export default function PlayOneGk() {
         setCurrentStatus(null)
         message.success(data.message)
         setStatus('playing')
+        setCurrentTopicIndex((prev) => prev + 1)
+        setIsReadyForNextTopic(false)
 
         if (data.current_turn === users.user1) player1CountDown.startCountDown()
         else if (data.current_turn === users.user2) player2CountDown.startCountDown()
@@ -82,9 +94,14 @@ export default function PlayOneGk() {
       case 'error':
         message.error(data.message)
         setIsError(true)
+        setTimeout(() => {
+          setIsError(false)
+        }, 1000)
         break
       case 'turn':
-        setAnswer('')
+        if (player1CountDown.isRunning || player2CountDown.isRunning) {
+          dispatch(actionPlaySound('correct'))
+        }
         handleSwitchTurn()
         message.success(data.message)
         break
@@ -143,6 +160,30 @@ export default function PlayOneGk() {
         break
       }
 
+      case 'judgment':
+        if (data.judgment === 'incorrect') {
+          setIsError(true)
+          setTimeout(() => {
+            setIsError(false)
+          }, 1000)
+        }
+
+        if (
+          (player1CountDown.isRunning && users.user1 === userInfo?.username) ||
+          (player2CountDown.isRunning && users.user2 === userInfo?.username)
+        )
+          if (data.judgment === 'incorrect') dispatch(actionPlaySound('wrong'))
+          else dispatch(actionPlaySound('correct'))
+
+        break
+
+      case 'ready_game':
+        if (data.all_ready) {
+          if (userInfo?.username === roomData?.created_by.username) setStatus('waiting_start')
+        }
+
+        break
+
       case 'end':
         setWinner(data.winner)
     }
@@ -194,8 +235,6 @@ export default function PlayOneGk() {
   }
 
   const handleJudgment = (judgment: 'correct' | 'incorrect') => {
-    console.log(judgment)
-
     sendMessage({
       action: 'judgment',
       judgment,
@@ -223,7 +262,11 @@ export default function PlayOneGk() {
       <Row align={'middle'} className="justify-center mb-10">
         <Col
           span={5}
-          className="flex items-center justify-center flex-col gap-2 border-[2px] p-6 max-w-[200px] rounded-2xl"
+          className={twMerge(
+            'flex items-center justify-center flex-col gap-2 border-[2px] p-6 max-w-[200px] rounded-2xl',
+            player1CountDown.isRunning && 'border-gray-900 shadow-gray-300',
+            isError && player1CountDown.isRunning && 'border-red-500 shadow shadow-red-300',
+          )}
         >
           <Image
             width={74}
@@ -283,7 +326,11 @@ export default function PlayOneGk() {
 
         <Col
           span={5}
-          className="flex items-center justify-center flex-col gap-2 border-[2px] p-6 max-w-[200px] rounded-2xl"
+          className={twMerge(
+            'flex items-center justify-center flex-col gap-2 border-[2px] p-6 max-w-[200px] rounded-2xl',
+            player2CountDown.isRunning && 'border-gray-900 shadow-gray-300',
+            isError && player2CountDown.isRunning && 'border-red-500 shadow shadow-red-300',
+          )}
         >
           <Image
             width={74}
@@ -389,14 +436,29 @@ export default function PlayOneGk() {
         destroyOnClose
         footer={
           <Flex justify="space-between" align="center" className="pt-6 pb-2">
-            <Button>Ready (1/2)</Button>
+            <Button>
+              Ready ({currentTopicIndex}/{roomData?.topics.length})
+            </Button>
             <Flex gap={16}>
               <Button className="w-32" onClick={() => router.replace('/home')}>
                 Quit
               </Button>
-              <Button type="primary" className="w-32">
-                Play
-              </Button>
+              {currentTopicIndex !== roomData?.topics.length && (
+                <Button
+                  type="primary"
+                  className="w-32"
+                  disabled={isReadyForNextTopic}
+                  onClick={() => {
+                    sendMessage({
+                      action: 'ready',
+                    })
+                    setIsReadyForNextTopic(true)
+                    setWinner(null)
+                  }}
+                >
+                  Play
+                </Button>
+              )}
             </Flex>
           </Flex>
         }
@@ -417,27 +479,11 @@ export default function PlayOneGk() {
             </>
           )}
         </Flex>
-        <div className="rounded-3xl border p-5">
-          <p className="text-center">NEXT TOPIC</p>
-
-          <div className="flex justify-center">
-            <Image
-              preview={false}
-              className="object-cover mx-auto block"
-              src="https://img.freepik.com/free-vector/flags-different-countries-speech-bubble-shape_23-2147862139.jpg?semt=ais_hybrid"
-              width={200}
-              height={200}
-              alt=""
-            />
-          </div>
-
-          <p className="text-2xl font-bold text-center mt-2">
-            300 Images
-            <br />
-            Animal
-          </p>
-        </div>
+        {currentTopicIndex !== roomData?.topics.length && (
+          <NextTopic id={roomData?.topics[currentTopicIndex]} />
+        )}
       </Modal>
+      <BgPlaySound />
     </Content>
   )
 }

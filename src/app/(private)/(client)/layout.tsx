@@ -1,6 +1,7 @@
 'use client'
 
 import { ReactNode, Suspense, useLayoutEffect, useState } from 'react'
+import BgSound from '~/components/common/BgSound'
 import PrivateClientLayout from '~/components/layout/PrivateClientLayout'
 
 export default function App({ children }: { children: ReactNode }) {
@@ -15,6 +16,7 @@ export default function App({ children }: { children: ReactNode }) {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <PrivateClientLayout>{children}</PrivateClientLayout>
+      <BgSound />
     </Suspense>
   )
 }

@@ -1,4 +1,13 @@
-type WsEventType = 'start' | 'question' | 'turn' | 'error' | 'end' | 'user_joined' | 'change_role'
+type WsEventType =
+  | 'start'
+  | 'question'
+  | 'turn'
+  | 'error'
+  | 'end'
+  | 'user_joined'
+  | 'change_role'
+  | 'judgment'
+  | 'ready_game'
 
 export interface IRoom {
   id: string
@@ -75,6 +84,18 @@ type IChangeRole = {
     }
 )
 
+interface IJudgment {
+  type: 'judgment'
+  judgment: 'correct' | 'incorrect'
+}
+
+interface IReadyGame {
+  type: 'ready_game'
+  rate: string
+  all_ready: boolean
+  user: string
+}
+
 type WsEvent<T extends WsEventType> = T extends 'start'
   ? IStartGame
   : T extends 'question'
@@ -87,6 +108,10 @@ type WsEvent<T extends WsEventType> = T extends 'start'
   ? IUserJoin
   : T extends 'change_role'
   ? IChangeRole
+  : T extends 'judgment'
+  ? IJudgment
+  : T extends 'ready_game'
+  ? IReadyGame
   : IEnd
 
 export type TWsEvent<T extends WsEventType> = WsEvent<T>
