@@ -1,11 +1,17 @@
 import { useState, useRef, useLayoutEffect } from 'react'
 
 interface WebSocketMessage {
-  action: 'submit' | 'start_game' | 'change_role' | 'judgment' | 'ready'
+  action: 'submit' | 'start_game' | 'change_role' | 'judgment' | 'ready' | 'next_question'
   [key: string]: any
 }
 
-export const useWebSocket = (url: string, onMessage?: (data: any) => void) => {
+export const useWebSocket = (
+  url: string,
+  onMessage?: (data: any) => void,
+  options?: {
+    onError?: (e: Event) => void
+  },
+) => {
   const [isConnected, setIsConnected] = useState(false)
   const socketRef = useRef<WebSocket | null>(null)
 
@@ -18,7 +24,10 @@ export const useWebSocket = (url: string, onMessage?: (data: any) => void) => {
     socket.onclose = (ws) => {
       setIsConnected(false)
     }
-    socket.onerror = (error) => console.error('WebSocket error:', error)
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error)
+      options?.onError?.(error)
+    }
 
     return () => {
       socket.close()

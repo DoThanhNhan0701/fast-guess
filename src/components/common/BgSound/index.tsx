@@ -2,10 +2,13 @@
 
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
+import { useSelector } from 'react-redux'
+import { RootState } from '~/store'
 
 export default function BgSound() {
   const [playing, setPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
+  const { mute } = useSelector((state: RootState) => state.app)
 
   const pathname = usePathname()
 
@@ -33,6 +36,7 @@ export default function BgSound() {
 
   return (
     <audio
+      muted={mute}
       loop
       autoPlay
       controls

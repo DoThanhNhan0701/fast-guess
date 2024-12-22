@@ -31,19 +31,23 @@ export default function PlayOneGk() {
   const [roomData, setRoomData] = useState<IRoom | null>(null)
   const [roomTopic, setRoomTopic] = useState<null | Topic>(null)
 
-  const [currentStatus, setCurrentStatus] = useState<'NEED_START' | 'WAITING' | null>(null)
   const [currentRole, setCurrentRole] = useState<'player' | 'examiner' | null>(null)
   const [currentImage, setCurrentImage] = useState<string | null>(null)
   const [isError, setIsError] = useState(false)
   const [status, setStatus] = useState<
     'notAvailable' | 'waiting_opponent' | 'waiting_start' | 'playing'
   >('notAvailable')
+  const [owner, setOwner] = useState<string | null>(null)
   const [winner, setWinner] = useState<string | null>(null)
+  const [readyRate, setReadyRate] = useState<string | null>(null)
+  const [isCanceled, setIsCanceled] = useState(false)
+
+  const [userAvatarMapping, setUserAvatarMapping] = useState<Record<string, string | null>>({})
 
   const [users, setUsers] = useState<{
-    gk: null | any
-    user1: null | any
-    user2: null | any
+    gk: null | string
+    user1: null | string
+    user2: null | string
   }>({
     gk: null,
     user1: null,
@@ -65,10 +69,9 @@ export default function PlayOneGk() {
     }
   }
 
-  const handleNextTopic = () => {
+  const resetCountDown = () => {
     player1CountDown.setTime(roomData!.time)
     player2CountDown.setTime(roomData!.time)
-    setWinner(null)
   }
 
   const handleMessage = (data: TWsEvent<any>) => {
@@ -76,7 +79,6 @@ export default function PlayOneGk() {
 
     switch (data.type) {
       case 'start':
-        setCurrentStatus(null)
         message.success(data.message)
         setStatus('playing')
         setCurrentTopicIndex((prev) => prev + 1)
@@ -107,7 +109,8 @@ export default function PlayOneGk() {
         break
 
       case 'user_joined':
-        setCurrentRole(data.role!)
+        setOwner(data.owner_room)
+        if (data.username === userInfo?.username) setCurrentRole(data.role!)
         if (data.role === 'examiner') {
           setUsers((prev) => {
             if (data.players[0]) prev.user1 = data.players[0]
@@ -125,6 +128,7 @@ export default function PlayOneGk() {
               ...prev,
               user1: data.username,
               user2: data.players[0] || null,
+              gk: data.examiner ?? null,
             }
           })
         }
@@ -138,21 +142,17 @@ export default function PlayOneGk() {
           }
 
           if (data.new_role === 'examiner') {
-            setUsers((prev) => {
-              if (users.user1 === data.user) return { ...prev, gk: data.user, user1: null }
-              return { ...prev, gk: data.user, user2: null }
-            })
+            setUsers((prev) => ({
+              gk: data.user,
+              user1: prev.user1 === data.user ? null : prev.user1,
+              user2: prev.user2 === data.user ? null : prev.user2,
+            }))
           } else {
             setUsers((prev) => {
-              if (prev.user1)
-                return {
-                  ...prev,
-                  user2: data.user,
-                }
-              return {
-                ...prev,
-                user1: data.user,
-              }
+              prev.gk = null
+              if (!prev.user1) prev.user1 = data.user
+              else prev.user2 = data.user
+              return { ...prev }
             })
           }
         }
@@ -178,10 +178,33 @@ export default function PlayOneGk() {
         break
 
       case 'ready_game':
+        setReadyRate(data.rate)
         if (data.all_ready) {
           if (userInfo?.username === roomData?.created_by.username) setStatus('waiting_start')
-        }
+          else setStatus('notAvailable')
+          resetCountDown()
+        } else setStatus('notAvailable')
 
+        break
+
+      case 'out_room':
+        setOwner(data.owner_room)
+        for (const key in users) {
+          const _key = key as keyof typeof users
+          if (users[_key] === data.username) {
+            setUsers((prev) => ({
+              ...prev,
+              [_key]: null,
+            }))
+            break
+          }
+        }
+        break
+
+      case 'cancel_playing':
+        player1CountDown.pauseCountDown()
+        player2CountDown.pauseCountDown()
+        setIsCanceled(true)
         break
 
       case 'end':
@@ -189,9 +212,17 @@ export default function PlayOneGk() {
     }
   }
 
+  const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${
+    new URL(domainSocket ?? '').host
+  }/ws/game/${roomID}/?token=${accessToken}`
+
   const { sendMessage } = useWebSocket(
-    `ws://${new URL(domainSocket ?? '').host}/ws/game/${roomID}/?token=${accessToken}`,
+    // `ws://${new URL(domainSocket ?? '').host}/ws/game/${roomID}/?token=${accessToken}`,
+    wsUrl,
     handleMessage,
+    {
+      onError: () => router.replace('/home'),
+    },
   )
 
   useEffect(() => {
@@ -208,15 +239,31 @@ export default function PlayOneGk() {
   }, [])
 
   useEffect(() => {
-    if (
-      users.gk &&
-      users.user1 &&
-      users.user2 &&
-      userInfo?.username === roomData?.created_by.username
-    ) {
+    if (users.gk && users.user1 && users.user2 && userInfo?.username === owner) {
       setStatus('waiting_start')
-    }
+    } else setStatus('notAvailable')
   }, [userInfo, users, roomData])
+
+  useEffect(() => {
+    for (const key in users) {
+      const userName = users[key as keyof typeof users]
+      if (userName) {
+        if (!userAvatarMapping[userName]) {
+          ;(async () => {
+            try {
+              const response = await getRequest<{ avatar: string | null }>(
+                `${endpointBase.USER}${userName}/`,
+              )
+              setUserAvatarMapping((prev) => ({
+                ...prev,
+                [userName]: response.avatar ?? '_',
+              }))
+            } catch (error) {}
+          })()
+        }
+      }
+    }
+  }, [users])
 
   const handleStart = () => {
     console.log('start game')
@@ -239,6 +286,24 @@ export default function PlayOneGk() {
       action: 'judgment',
       judgment,
     })
+  }
+
+  const getAvatarUser = (userName: string | null, role: 'user1' | 'user2' | 'examiner') => {
+    const avatarDefaults = {
+      user1:
+        'https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg',
+      user2:
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDso3YjdjeD_8tA6vVacoI3ogd6YqF-VfyGiylBV2v6-zitJretXOtsLvJ5UZDrlNs7nc&usqp=CAU',
+      examiner:
+        'https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg',
+    }
+
+    const avatar = userAvatarMapping[userName ?? '']
+    if (!avatar || avatar === '_') {
+      return avatarDefaults[role]
+    }
+
+    return avatar
   }
 
   return (
@@ -268,13 +333,22 @@ export default function PlayOneGk() {
             isError && player1CountDown.isRunning && 'border-red-500 shadow shadow-red-300',
           )}
         >
-          <Image
-            width={74}
-            height={74}
-            preview={false}
-            className="rounded-xl"
-            src="https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg"
-          />
+          {currentRole === 'examiner' && !users.user1 ? (
+            <Tooltip title="Select this role (player)">
+              <button
+                className="w-[74px] aspect-square rounded-full bg-gray-300"
+                onClick={() => handleChangeRole('player')}
+              ></button>
+            </Tooltip>
+          ) : (
+            <Image
+              width={74}
+              height={74}
+              preview={false}
+              className="rounded-xl object-cover"
+              src={getAvatarUser(users.user1, 'user1')}
+            />
+          )}
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">
             {users.user1}
           </p>
@@ -332,13 +406,22 @@ export default function PlayOneGk() {
             isError && player2CountDown.isRunning && 'border-red-500 shadow shadow-red-300',
           )}
         >
-          <Image
-            width={74}
-            height={74}
-            preview={false}
-            className="rounded-xl"
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDso3YjdjeD_8tA6vVacoI3ogd6YqF-VfyGiylBV2v6-zitJretXOtsLvJ5UZDrlNs7nc&usqp=CAU"
-          />
+          {currentRole === 'examiner' && !users.user2 ? (
+            <Tooltip title="Select this role (player)">
+              <button
+                className="w-[74px] aspect-square rounded-full bg-gray-300"
+                onClick={() => handleChangeRole('player')}
+              ></button>
+            </Tooltip>
+          ) : (
+            <Image
+              width={74}
+              height={74}
+              preview={false}
+              className="rounded-xl object-cover"
+              src={getAvatarUser(users.user2, 'user2')}
+            />
+          )}
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl">
             {users.user2}
           </p>
@@ -364,6 +447,14 @@ export default function PlayOneGk() {
       {status === 'playing' ? (
         users.gk === userInfo?.username && (
           <div className="max-w-[40%] m-auto">
+            <p className="text-center text-xl">
+              Answer:{' '}
+              <strong>
+                {decodeURIComponent(
+                  currentImage?.split('/').pop()?.split('.').shift() ?? '',
+                ).replaceAll('_', ' ')}
+              </strong>
+            </p>
             <Flex className="gap-6 mt-10">
               <Button className="w-full" type="primary" onClick={() => handleJudgment('correct')}>
                 Right
@@ -373,7 +464,11 @@ export default function PlayOneGk() {
               </Button>
             </Flex>
             <Button
-              onClick={() => router.push('/play-one-gk/4/result')}
+              onClick={() =>
+                sendMessage({
+                  action: 'next_question',
+                })
+              }
               className="w-full mt-6"
               type="primary"
             >
@@ -382,37 +477,44 @@ export default function PlayOneGk() {
           </div>
         )
       ) : (
-        <Flex className="w-2/5 mx-auto gap-6 mt-14">
-          <Button
-            className="w-full"
-            type="primary"
-            disabled={status !== 'waiting_start'}
-            loading={status === 'waiting_opponent'}
-            onClick={handleStart}
-          >
-            Play
-          </Button>
-          <Button
-            className="w-full"
-            disabled={status === 'waiting_opponent'}
-            onClick={() => {
-              router.replace('/home')
-            }}
-          >
-            Quit
-          </Button>
-        </Flex>
+        <>
+          {!!readyRate && (
+            <p className={twMerge('text-xl text-center', readyRate === '3/3' && 'text-green-700')}>
+              Ready: <strong>{readyRate}</strong>
+            </p>
+          )}
+          <Flex className="w-2/5 mx-auto gap-6 mt-14">
+            <Button
+              className="w-full"
+              type="primary"
+              disabled={status !== 'waiting_start'}
+              loading={status === 'waiting_opponent'}
+              onClick={handleStart}
+            >
+              Play
+            </Button>
+            <Button
+              className="w-full"
+              disabled={status === 'waiting_opponent'}
+              onClick={() => {
+                router.replace('/home')
+              }}
+            >
+              Quit
+            </Button>
+          </Flex>
+        </>
       )}
 
       <Flex justify="center" className="mt-8">
         <div className="flex items-center justify-center flex-col gap-2 border-[2px] p-6 max-w-[200px] rounded-2xl min-w-48">
-          {currentRole === 'examiner' ? (
+          {users.gk ? (
             <Image
               width={74}
               height={74}
               preview={false}
-              className="rounded-xl"
-              src="https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg"
+              className="rounded-xl object-cover"
+              src={getAvatarUser(users.gk, 'examiner')}
             />
           ) : (
             <Tooltip title="Select this role (gk)">
@@ -482,6 +584,21 @@ export default function PlayOneGk() {
         {currentTopicIndex !== roomData?.topics.length && (
           <NextTopic id={roomData?.topics[currentTopicIndex]} />
         )}
+      </Modal>
+      <Modal
+        open={isCanceled}
+        destroyOnClose
+        centered
+        closeIcon={null}
+        footer={
+          <Button className="w-32" onClick={() => router.replace('/home')}>
+            Quit
+          </Button>
+        }
+      >
+        <p className="text-center text-xl font-semibold text-balance">
+          The <strong>Examiner has gone. The match has been canceled!!!</strong>
+        </p>
       </Modal>
       <BgPlaySound />
     </Content>

@@ -36,6 +36,8 @@ export default function PlayOneOne() {
   const [roomTopic, setRoomTopic] = useState<null | Topic>(null)
   const [answer, setAnswer] = useState('')
   const [opponent, setOpponent] = useState<string | null>(null)
+  const [owner, setOwner] = useState<string | null>(null)
+  const [opponentAvatar, setOpponentAvatar] = useState<null | string | '_'>(null)
 
   const [currentStatus, setCurrentStatus] = useState<'NEED_START' | 'WAITING' | null>(null)
 
@@ -68,6 +70,7 @@ export default function PlayOneOne() {
     switch (data.type) {
       case 'start':
         setCurrentStatus(null)
+        setAnswer('')
         setStatus('playing')
         message.success(data.message)
         // setOpponent(data.players.find((name) => name !== userInfo!.username)!)
@@ -100,10 +103,15 @@ export default function PlayOneOne() {
         break
 
       case 'user_joined':
+        setOwner(data.owner_room)
         if (data.players?.[0]) {
-          setOpponent(data.username)
-          if (userInfo?.username === roomData?.created_by.username) setStatus('waiting_start')
+          // setOpponent(data.username)
+          if (userInfo?.username === data.owner_room) setStatus('waiting_start')
         }
+
+        if (data.username !== userInfo?.username) {
+          setOpponent(data.username)
+        } else setOpponent(data.players[0])
         break
 
       case 'ready_game':
@@ -113,13 +121,24 @@ export default function PlayOneOne() {
 
         break
 
+      case 'out_room':
+        setOpponent(null)
+        setOpponentAvatar(null)
+        setStatus('notAvailable')
+        setOwner(data.owner_room)
+        break
+
       case 'end':
         if (data.winner === userInfo?.username) setResult('WIN')
         else setResult('LOSE')
     }
   }
 
-  const { sendMessage } = useWebSocket(wsUrl, handleMessage)
+  const { sendMessage } = useWebSocket(wsUrl, handleMessage, {
+    onError: () => {
+      router.replace('/home')
+    },
+  })
 
   useEffect(() => {
     ;(async () => {
@@ -140,6 +159,19 @@ export default function PlayOneOne() {
   useEffect(() => {
     if (roomData && roomData.created_by.username !== userInfo?.username) setCurrentStatus('WAITING')
   }, [roomData])
+
+  useEffect(() => {
+    if (opponent && !opponentAvatar) {
+      ;(async () => {
+        try {
+          const response = await getRequest<{ avatar: null | string }>(
+            `${endpointBase.USER}${opponent}/`,
+          )
+          setOpponentAvatar(response.avatar ?? '_')
+        } catch (error) {}
+      })()
+    }
+  }, [opponent])
 
   const handleSubmit = () => {
     if (!answer.trim()) {
@@ -196,8 +228,11 @@ export default function PlayOneOne() {
             width={74}
             height={74}
             preview={false}
-            className="rounded-xl"
-            src="https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg"
+            className="rounded-xl object-cover"
+            src={
+              userInfo?.avatar ??
+              'https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg'
+            }
           />
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">
             {userInfo?.username}
@@ -260,8 +295,12 @@ export default function PlayOneOne() {
             width={74}
             height={74}
             preview={false}
-            className="rounded-xl"
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDso3YjdjeD_8tA6vVacoI3ogd6YqF-VfyGiylBV2v6-zitJretXOtsLvJ5UZDrlNs7nc&usqp=CAU"
+            className="rounded-xl object-cover"
+            src={
+              !opponentAvatar || opponentAvatar === '_'
+                ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDso3YjdjeD_8tA6vVacoI3ogd6YqF-VfyGiylBV2v6-zitJretXOtsLvJ5UZDrlNs7nc&usqp=CAU'
+                : opponentAvatar
+            }
           />
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl">
             {opponent ?? '...'}
@@ -292,6 +331,7 @@ export default function PlayOneOne() {
                 isError && 'border-red-500',
               )}
               value={answer}
+              disabled={!player1CountDown.isRunning}
               onChange={(e) => {
                 setAnswer(e.target.value)
                 setIsError(false)
@@ -321,15 +361,24 @@ export default function PlayOneOne() {
         <div className="max-w-[40%] m-auto">
           <Flex className="gap-6 mt-10">
             <Button
+              className="w-full"
+              type="primary"
+              disabled={!player1CountDown.isRunning}
+              onClick={() =>
+                sendMessage({
+                  action: 'next_question',
+                })
+              }
+            >
+              Next
+            </Button>
+            <Button
               onClick={handleSubmit}
               className="w-full"
               type="default"
               disabled={!player1CountDown.isRunning}
             >
               Submit
-            </Button>
-            <Button className="w-full" type="primary" disabled={!player1CountDown.isRunning}>
-              Next
             </Button>
           </Flex>
         </div>

@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, current, PayloadAction } from '@reduxjs/toolkit'
 
 const data = Object.freeze({
   wrongSoundSrc: '/sound/wrong-sound.mp3',
@@ -7,21 +7,27 @@ const data = Object.freeze({
 
 const authSlice = createSlice({
   name: 'app',
-  initialState: {},
+  initialState: {
+    mute: false,
+  },
   reducers: {
-    actionPlaySound(_, action: PayloadAction<'wrong' | 'correct'>) {
+    actionPlaySound(state, action: PayloadAction<'wrong' | 'correct'>) {
       const audioElement = document.createElement('audio')
       audioElement.autoplay = true
       audioElement.style.display = 'none'
       audioElement.addEventListener('ended', () => document.body.removeChild(audioElement))
-
+      const { mute } = current(state)
+      audioElement.muted = mute
       if (action.payload === 'wrong') audioElement.src = data.wrongSoundSrc
       else if (action.payload === 'correct') audioElement.src = data.correctSoundSrc
 
       document.body.appendChild(audioElement)
     },
+    actionChangeMute: (state, action: PayloadAction<boolean>) => {
+      state.mute = action.payload
+    },
   },
 })
 
-export const { actionPlaySound } = authSlice.actions
+export const { actionPlaySound, actionChangeMute } = authSlice.actions
 export default authSlice.reducer

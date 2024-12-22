@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { HomeOutlined } from '@ant-design/icons'
-import { Avatar, Card, Col, Empty, Flex, Image, Pagination, Row, Spin } from 'antd'
+import { Avatar, Card, Col, Empty, Flex, Image, Pagination, Row, message } from 'antd'
 
 import Button from '~/components/common/Button'
 import Content from '~/components/common/Content'
@@ -22,6 +22,8 @@ interface Room {
   time: number
   topics: string[]
   type: 'fighting' | 'examiner'
+  current_player: number
+  count_player: number
 }
 
 export default function Home() {
@@ -51,6 +53,10 @@ export default function Home() {
   }, [isRender, useDb])
 
   const handleClickRoom = (room: Room) => {
+    if (room.count_player === room.current_player) {
+      message.warning('Room is full')
+      return
+    }
     if (room.type === 'examiner') router.push(`/play-one-gk/${room.id}`)
     else router.push(`/play-one-one/${room.id}`)
   }
@@ -81,8 +87,8 @@ export default function Home() {
           </Button>
         </Flex>
         <Row gutter={[24, 24]} className="mt-4">
-          {listRoom.map((item, index) => (
-            <Col key={index} span={6} xs={24} sm={12} md={12} lg={8} xl={6} xxl={6}>
+          {listRoom.map((item) => (
+            <Col key={item.id} span={6} xs={24} sm={12} md={12} lg={8} xl={6} xxl={6}>
               <div
                 onClick={() => handleClickRoom(item)}
                 className="cursor-pointer p-1 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-xl transition ease-in-out delay-150 bg-blue-500 hover:-translate-y-1 hover:scale-100 duration-300"
@@ -117,10 +123,12 @@ export default function Home() {
                             } s`}</p>
                           </Col>
                           <Col span={12}>
-                            <p>Time: {item.time}s</p>
+                            <p>Mode: {item.type}</p>
                           </Col>
                           <Col span={12}>
-                            <p>Time: {item.time}s</p>
+                            <p>
+                              Player: {item.current_player}/{item.count_player}
+                            </p>
                           </Col>
                         </Row>
                       </>
