@@ -1,7 +1,7 @@
 'use client'
 
 import { PieChartOutlined, UserOutlined } from '@ant-design/icons'
-import { Flex, Layout, Menu, MenuProps, Popover, theme } from 'antd'
+import { Avatar, Flex, Layout, Menu, MenuProps, Popover, theme } from 'antd'
 import Image from 'next/image'
 import { ReactNode, useState } from 'react'
 
@@ -99,7 +99,11 @@ export default function PrivateCmsLayout({ children }: { children: ReactNode }) 
               >
                 <div className="flex items-center gap-1 h-[41px]">
                   <p className="text-black">{userInfo?.email}</p>
-                  <FaRegUser color="#000" size="16px" />
+                  {!userInfo?.avatar ? (
+                    <FaRegUser color="#fff" size="16px" />
+                  ) : (
+                    <Avatar size={'default'} src={`${userInfo?.avatar}`} />
+                  )}
                 </div>
               </Popover>
             </div>

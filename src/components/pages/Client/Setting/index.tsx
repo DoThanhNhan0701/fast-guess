@@ -1,18 +1,19 @@
 'use client'
 
-import { HomeOutlined } from '@ant-design/icons'
-import { Flex, Image, message, Popconfirm } from 'antd'
+import { HomeOutlined, UploadOutlined } from '@ant-design/icons'
+import { Button, Flex, Image, message, Popconfirm, Upload } from 'antd'
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import { FaPlus, FaRegTrashAlt } from 'react-icons/fa'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { endpointBase } from '~/services/endpoint'
-import { deleteRequest, getRequest } from '~/services/request'
+import { deleteRequest, getRequest, postRequest } from '~/services/request'
 import { RootState } from '~/store'
 
 import CreateTopic from './_component/CreateTopic'
 import Content from '~/components/common/Content'
 import useModal from '~/hook/useModal'
+import { actionUpdatePartial } from '~/store/slice/auth'
 
 export interface Topic {
   id: string
@@ -21,12 +22,19 @@ export interface Topic {
   count_image: number
 }
 
+export const baseUrl = `https://be.onechamp.id.vn`
+
 export default function SettingPage() {
+  const distc = useDispatch()
   const router = useRouter()
   const { userInfo } = useSelector((state: RootState) => state.auth)
   const [listTopic, setListTopic] = useState<Topic[]>([])
   const { isOpen, closeModal, openModal } = useModal()
   const [isRender, setIsRender] = useState(false)
+  const [avatar, setAvatar] = useState<string>(
+    userInfo?.avatar ??
+      'https://cdn.vectorstock.com/i/1000x1000/44/01/default-avatar-photo-placeholder-icon-grey-vector-38594401.webp',
+  )
 
   useEffect(() => {
     getRequest(endpointBase.TOPIC, {
@@ -47,6 +55,40 @@ export default function SettingPage() {
         setIsRender(!isRender)
       })
       .catch(() => {})
+  }
+
+  const handleUpload = async (file: File) => {
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    try {
+      const response: any = await postRequest(
+        endpointBase.UPLOAD_AVATAR,
+        {
+          data: formData,
+        },
+        true,
+      )
+      if (response) {
+        setAvatar(`${baseUrl}/${response.data.avatar}`)
+        distc(
+          actionUpdatePartial({
+            avatar: `${baseUrl}/${response.data.avatar}`,
+          }),
+        )
+      }
+      message.success('Avatar updated successfully!')
+    } catch (error) {
+      message.error('Failed to upload avatar')
+    }
+  }
+
+  const uploadProps = {
+    beforeUpload: (file: File) => {
+      handleUpload(file)
+      return false // Prevent auto-upload
+    },
+    showUploadList: false,
   }
 
   return (
@@ -70,13 +112,20 @@ export default function SettingPage() {
             <p className="font-bold text-base">{`Elo: ${userInfo?.score}`}</p>
           </Flex>
           <h4 className="py-4 font-extrabold text-2xl text-center uppercase">Setting User</h4>
-          <div className="flex justify-center w-full">
+          <div className="flex justify-center w-full flex-col items-center">
+            {/* Upload avatar */}
             <Image
               className="rounded-full border"
               preview={false}
               width={100}
-              src="https://cdn.vectorstock.com/i/1000x1000/44/01/default-avatar-photo-placeholder-icon-grey-vector-38594401.webp"
+              height={100}
+              src={avatar}
             />
+            <Upload {...uploadProps}>
+              <Button icon={<UploadOutlined />} type="primary" className="mt-4">
+                Upload Avatar
+              </Button>
+            </Upload>
           </div>
           <div>
             <p className="font-bold text-base">{`Username: ${userInfo?.username}`}</p>
