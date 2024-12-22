@@ -1,7 +1,7 @@
 'use client'
 
+import { Avatar, Layout, Menu, MenuProps, Popover } from 'antd'
 import Image from 'next/image'
-import { Layout, Menu, MenuProps, Popover } from 'antd'
 import { ReactNode } from 'react'
 
 import { usePathname, useRouter } from 'next/navigation'
@@ -33,6 +33,9 @@ const items: MenuItem[] = [getItem('Ranking', 'ranking', <FaRankingStar />)]
 
 export default function PrivateClientLayout({ children }: { children: ReactNode }) {
   const { userInfo } = useSelector((state: RootState) => state.auth)
+
+  console.log(userInfo?.avatar)
+
   const dispatch = useDispatch()
 
   const router = useRouter()
@@ -93,7 +96,11 @@ export default function PrivateClientLayout({ children }: { children: ReactNode 
           >
             <div className="flex items-center gap-1 h-[41px]">
               <p className="text-white">{userInfo?.email}</p>
-              <FaRegUser color="#fff" size="16px" />
+              {!userInfo?.avatar ? (
+                <FaRegUser color="#fff" size="16px" />
+              ) : (
+                <Avatar size={'default'} src={`${userInfo?.avatar}`} />
+              )}
             </div>
           </Popover>
         </div>

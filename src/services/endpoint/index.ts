@@ -22,6 +22,7 @@ const endpointBase = {
   LIB_LIST_LIB: `${prefixBase}/lib/list_lib/`,
 
   PLAN: `${prefixBase}/plan/`,
+  UPLOAD_AVATAR: `${prefixBase}/users/avatar/`,
 }
 
 const endpointOther = {

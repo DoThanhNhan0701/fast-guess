@@ -12,6 +12,7 @@ interface User {
   is_staff: boolean
   is_active: boolean
   score: number
+  avatar: string | null
 }
 
 export interface AuthInterface {
