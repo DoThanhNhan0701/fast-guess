@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { HomeOutlined } from '@ant-design/icons'
-import { Avatar, Card, Col, Empty, Flex, Image, Pagination, Row } from 'antd'
+import { Avatar, Card, Col, Empty, Flex, Image, Pagination, Row, Spin } from 'antd'
 
 import Button from '~/components/common/Button'
 import Content from '~/components/common/Content'
@@ -87,7 +87,7 @@ export default function Home() {
                 onClick={() => handleClickRoom(item)}
                 className="cursor-pointer p-1 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-xl transition ease-in-out delay-150 bg-blue-500 hover:-translate-y-1 hover:scale-100 duration-300"
               >
-                <Card className="border-none rounded-lg" loading={loading}>
+                <Card className="border-none rounded-lg">
                   <Card.Meta
                     avatar={
                       <Avatar src="https://t4.ftcdn.net/jpg/04/42/21/53/360_F_442215355_AjiR6ogucq3vPzjFAAEfwbPXYGqYVAap.jpg" />
@@ -131,7 +131,7 @@ export default function Home() {
             </Col>
           ))}
         </Row>
-        {!loading && listRoom.length ? (
+        {!loading ? (
           <Flex justify="center" className="mt-4">
             <Pagination total={1} defaultPageSize={1} responsive={false} />
           </Flex>

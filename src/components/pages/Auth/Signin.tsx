@@ -41,6 +41,7 @@ export default function Signin({ onChangeTab }: { onChangeTab: () => void }) {
               is_active: res.user.is_active,
               is_superuser: res.user.is_superuser,
               is_staff: res.user.is_staff,
+              score: res.user.score,
             },
           }),
         )
