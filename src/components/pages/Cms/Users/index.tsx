@@ -1,11 +1,12 @@
 'use client'
 
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
-import { Button, Space, Table } from 'antd'
+import { DeleteOutlined } from '@ant-design/icons'
+import { Button, message, Modal, Space, Table } from 'antd'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Content from '~/components/common/Content'
 import { endpointBase } from '~/services/endpoint'
-import { getRequest } from '~/services/request'
+import { deleteRequest, getRequest } from '~/services/request'
 
 interface User {
   id: number
@@ -17,14 +18,41 @@ interface User {
 
 export default function Users() {
   const [listUser, setListUser] = useState<User[]>([])
+  const router = useRouter()
 
   useEffect(() => {
+    fetchUser()
+  }, [])
+
+  const fetchUser = () => {
     getRequest(endpointBase.USER)
       .then((e: any) => {
         setListUser(e)
       })
       .catch(() => {})
-  }, [])
+  }
+
+  const handleDeleteUser = (userId: string | number) => {
+    Modal.confirm({
+      title: 'Delete user',
+      content: 'Are use sure want to delete this user',
+      okType: 'danger',
+      okText: 'Delete',
+      okButtonProps: {
+        type: 'primary',
+      },
+      onOk: async () => {
+        deleteRequest(`${endpointBase.USER}${userId}/`)
+          .then(() => {
+            message.success('User deleted')
+            fetchUser()
+          })
+          .catch(() => {
+            message.error('Delete user failed')
+          })
+      },
+    })
+  }
 
   const columns: any[] = [
     {
@@ -64,8 +92,12 @@ export default function Users() {
       align: 'center',
       render: (text: string, record: User) => (
         <Space key={record.id} size="middle">
-          <Button icon={<EditOutlined />} type="link" />
-          <Button icon={<DeleteOutlined />} type="link" danger />
+          <Button
+            icon={<DeleteOutlined />}
+            type="link"
+            danger
+            onClick={() => handleDeleteUser(record.id)}
+          />
         </Space>
       ),
     },
@@ -78,6 +110,7 @@ export default function Users() {
         breadcrumb={[
           {
             title: 'Home',
+            onClick: () => router.push('/home'),
           },
           {
             title: 'Users',

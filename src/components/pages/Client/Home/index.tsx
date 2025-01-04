@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { HomeOutlined } from '@ant-design/icons'
-import { Avatar, Card, Col, Empty, Flex, Image, Pagination, Row, message } from 'antd'
+import { Col, Empty, Flex, Pagination, Row, message } from 'antd'
 
 import Button from '~/components/common/Button'
 import Content from '~/components/common/Content'
@@ -13,9 +13,12 @@ import CreateRoom from './_component/CreateRoom'
 import { getRequest } from '~/services/request'
 import { endpointBase } from '~/services/endpoint'
 import useDebounce from '~/hook/useDebounce'
+import RoomItem from './_component/RoomItem'
 
 interface Room {
-  created_by: string
+  created_by: {
+    avatar: string | null
+  }
   avatar: string | null
   username: string
   id: string
@@ -93,48 +96,15 @@ export default function Home() {
                 onClick={() => handleClickRoom(item)}
                 className="cursor-pointer p-1 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-xl transition ease-in-out delay-150 bg-blue-500 hover:-translate-y-1 hover:scale-100 duration-300"
               >
-                <Card className="border-none rounded-lg">
-                  <Card.Meta
-                    avatar={
-                      <Avatar src="https://t4.ftcdn.net/jpg/04/42/21/53/360_F_442215355_AjiR6ogucq3vPzjFAAEfwbPXYGqYVAap.jpg" />
-                    }
-                    title={`ID Room: ${item.id}`}
-                    className="[&_.ant-image-mask]:rounded-xl"
-                    description={
-                      <>
-                        <Image
-                          preview={false}
-                          className="rounded-xl object-cover"
-                          width={150}
-                          height={150}
-                          src={
-                            'https://motherspet.com/blogs/wp-content/webp-express/webp-images/uploads/2024/07/100-wild-animals-870x490.jpg.webp'
-                          }
-                        />
-                        <Row className="text-base font-bold text-slate-800">
-                          <Col span={12}>
-                            <p className="text-base font-bold text-slate-800">{`Topic: ${
-                              item.topics.length ?? 0
-                            }`}</p>
-                          </Col>
-                          <Col span={12}>
-                            <p className="text-base font-bold text-slate-800">{`Time: ${
-                              item?.time ? item.time : 0
-                            } s`}</p>
-                          </Col>
-                          <Col span={12}>
-                            <p>Mode: {item.type}</p>
-                          </Col>
-                          <Col span={12}>
-                            <p>
-                              Player: {item.current_player}/{item.count_player}
-                            </p>
-                          </Col>
-                        </Row>
-                      </>
-                    }
-                  />
-                </Card>
+                <RoomItem
+                  id={item.id}
+                  count_player={item.count_player}
+                  current_player={item.current_player}
+                  time={item.time}
+                  topics={item.topics}
+                  type={item.type}
+                  userAvatar={item.created_by.avatar}
+                />
               </div>
             </Col>
           ))}

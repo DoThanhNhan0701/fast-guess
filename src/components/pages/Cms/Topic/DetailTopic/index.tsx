@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { Card, Col, Dropdown, Form, Image, message, Modal, Row, Spin } from 'antd'
 
@@ -20,6 +20,7 @@ interface ListImage {
 export default function DetailTopic() {
   const [form] = Form.useForm()
   const pathName = usePathname()
+  const router = useRouter()
 
   const [listImage, setListImage] = useState<ListImage[]>([])
   const [currentItem, setCurrentItem] = useState<ListImage | null>(null)
@@ -117,6 +118,7 @@ export default function DetailTopic() {
       breadcrumb={[
         {
           title: 'Home',
+          onClick: () => router.push('/home'),
         },
         {
           title: 'Detail Topic',

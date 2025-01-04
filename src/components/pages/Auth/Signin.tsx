@@ -78,17 +78,7 @@ export default function Signin({ onChangeTab }: { onChangeTab: () => void }) {
         <Form.Item name={'username'} validateFirst>
           <Input placeholder="Username" size="large" />
         </Form.Item>
-        <Form.Item
-          name={'password'}
-          validateFirst
-          rules={[
-            {
-              required: true,
-              min: 6,
-              max: 30,
-            },
-          ]}
-        >
+        <Form.Item name={'password'} validateFirst>
           <InputPassword placeholder="Password" size="large" />
         </Form.Item>
         <Button

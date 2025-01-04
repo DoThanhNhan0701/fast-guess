@@ -16,6 +16,7 @@ import useModal from '~/hook/useModal'
 import { actionUpdatePartial } from '~/store/slice/auth'
 import { MdMusicNote, MdMusicOff } from 'react-icons/md'
 import { actionChangeMute } from '~/store/slice/app'
+import { API_SERVER } from '~/settings/constants'
 
 export interface Topic {
   id: string
@@ -24,7 +25,7 @@ export interface Topic {
   count_image: number
 }
 
-export const baseUrl = `https://be.onechamp.id.vn`
+// export const baseUrl = `https://be.onechamp.id.vn`
 
 export default function SettingPage() {
   const router = useRouter()
@@ -34,10 +35,7 @@ export default function SettingPage() {
   const [listTopic, setListTopic] = useState<Topic[]>([])
   const { isOpen, closeModal, openModal } = useModal()
   const [isRender, setIsRender] = useState(false)
-  const [avatar, setAvatar] = useState<string>(
-    userInfo?.avatar ??
-      'https://cdn.vectorstock.com/i/1000x1000/44/01/default-avatar-photo-placeholder-icon-grey-vector-38594401.webp',
-  )
+  const [avatar, setAvatar] = useState<string>(userInfo?.avatar ?? '/images/avatar-default.png')
 
   useEffect(() => {
     getRequest(endpointBase.TOPIC, {
@@ -73,10 +71,10 @@ export default function SettingPage() {
         true,
       )
       if (response) {
-        setAvatar(`${baseUrl}/${response.data.avatar}`)
+        setAvatar(`${API_SERVER}/${response.data.avatar}`)
         dispatch(
           actionUpdatePartial({
-            avatar: `${baseUrl}/${response.data.avatar}`,
+            avatar: `${API_SERVER}/${response.data.avatar}`,
           }),
         )
       }
@@ -101,7 +99,7 @@ export default function SettingPage() {
         layout="client"
         breadcrumb={[
           {
-            onClick: openModal,
+            onClick: () => router.push('/home'),
             title: <HomeOutlined />,
           },
           {
@@ -123,6 +121,8 @@ export default function SettingPage() {
               width={100}
               height={100}
               src={avatar}
+              alt=""
+              key="avatar"
             />
             <Upload {...uploadProps}>
               <Button icon={<UploadOutlined />} type="primary" className="mt-4">

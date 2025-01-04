@@ -75,6 +75,7 @@ export default function Topic() {
         breadcrumb={[
           {
             title: 'Home',
+            onClick: () => router.push('/home'),
           },
           {
             title: 'Topics',

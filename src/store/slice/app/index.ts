@@ -25,6 +25,7 @@ const authSlice = createSlice({
     },
     actionChangeMute: (state, action: PayloadAction<boolean>) => {
       state.mute = action.payload
+      localStorage.setItem('_mute', `${action.payload}`)
     },
   },
 })

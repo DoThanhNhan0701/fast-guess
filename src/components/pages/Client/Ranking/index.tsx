@@ -2,6 +2,7 @@
 
 import { HomeOutlined } from '@ant-design/icons'
 import { Avatar, Table, TableColumnsType } from 'antd'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Content from '~/components/common/Content'
 import { endpointBase } from '~/services/endpoint'
@@ -20,6 +21,7 @@ interface Ranking {
 export default function Ranking() {
   const [loading, setLoading] = useState<boolean>(false)
   const [ranking, setRanking] = useState<Ranking[]>([])
+  const router = useRouter()
 
   const columns: TableColumnsType<Ranking> = [
     {
@@ -72,6 +74,7 @@ export default function Ranking() {
       breadcrumb={[
         {
           title: <HomeOutlined />,
+          onClick: () => router.push('/home'),
         },
         {
           title: 'Ranking',

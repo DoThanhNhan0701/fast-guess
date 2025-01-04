@@ -31,7 +31,9 @@ export default function Signup({ onChangeTab }: { onChangeTab: () => void }) {
         setLoading(false)
       })
       .catch((res: any) => {
-        message.error(res?.response?.data?.message || 'System error')
+        message.error(
+          res?.response?.data?.[Object.keys(res?.response?.data)[0]]?.[0] ?? 'Something went wrong',
+        )
         setLoading(false)
       })
       .finally(() => {
@@ -83,7 +85,7 @@ export default function Signup({ onChangeTab }: { onChangeTab: () => void }) {
           rules={[
             {
               required: true,
-              min: 6,
+              min: 8,
               max: 30,
             },
           ]}

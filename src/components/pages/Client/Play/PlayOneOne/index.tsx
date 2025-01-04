@@ -23,13 +23,15 @@ import EditRoom from '../_component/EditRoom'
 import BgPlaySound from '~/components/common/BgPlaySound'
 import { actionPlaySound } from '~/store/slice/app'
 import NextTopic from '../_component/NextTopic'
+import webStorageClient from '~/utils/webStorageClient'
+import { ACCESS_TOKEN } from '~/settings/constants'
 
 export default function PlayOneOne() {
   const router = useRouter()
   const { id: roomID } = useParams()
   const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${
     new URL(domainSocket ?? '').host
-  }/ws/game/${roomID}/?token=${accessToken}`
+  }/ws/game/${roomID}/?token=${webStorageClient.get(ACCESS_TOKEN)}`
   const { userInfo } = useSelector((state: RootState) => state.auth)
   const dispatch = useDispatch()
   const [roomData, setRoomData] = useState<IRoom | null>(null)
@@ -64,6 +66,12 @@ export default function PlayOneOne() {
     }
   }
 
+  const handleReset = () => {
+    player1CountDown.setTime(roomData?.time ?? 0)
+    player2CountDown.setTime(roomData?.time ?? 0)
+    setAnswer('')
+  }
+
   const handleMessage = (data: TWsEvent<any>) => {
     console.log(data)
 
@@ -77,8 +85,6 @@ export default function PlayOneOne() {
         if (data.current_turn === userInfo?.username) player1CountDown.startCountDown()
         else player2CountDown.startCountDown()
         setCurrentTopicIndex((prev) => prev + 1)
-        player1CountDown.setTime(roomData?.time || 1)
-        player2CountDown.setTime(roomData?.time || 1)
         setIsReadyForNextTopic(false)
         break
 
@@ -117,7 +123,9 @@ export default function PlayOneOne() {
       case 'ready_game':
         if (data.all_ready) {
           if (userInfo?.username === roomData?.created_by.username) setStatus('waiting_start')
-        }
+        } else setStatus('notAvailable')
+
+        handleReset()
 
         break
 
@@ -171,7 +179,7 @@ export default function PlayOneOne() {
         } catch (error) {}
       })()
     }
-  }, [opponent])
+  }, [opponent, opponentAvatar])
 
   const handleSubmit = () => {
     if (!answer.trim()) {
@@ -199,6 +207,7 @@ export default function PlayOneOne() {
       breadcrumb={[
         {
           title: <HomeOutlined />,
+          onClick: () => router.push('/home'),
         },
         {
           title: 'Play One and One',
@@ -229,10 +238,8 @@ export default function PlayOneOne() {
             height={74}
             preview={false}
             className="rounded-xl object-cover"
-            src={
-              userInfo?.avatar ??
-              'https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg'
-            }
+            src={userInfo?.avatar ?? '/images/avatar-default.png'}
+            alt=""
           />
           <p className="font-bold text-xl px-4 py-2 border-[2px] border-[#000] rounded-2xl ">
             {userInfo?.username}
@@ -298,7 +305,7 @@ export default function PlayOneOne() {
             className="rounded-xl object-cover"
             src={
               !opponentAvatar || opponentAvatar === '_'
-                ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDso3YjdjeD_8tA6vVacoI3ogd6YqF-VfyGiylBV2v6-zitJretXOtsLvJ5UZDrlNs7nc&usqp=CAU'
+                ? '/images/avatar-default.png'
                 : opponentAvatar
             }
           />
@@ -336,6 +343,11 @@ export default function PlayOneOne() {
                 setAnswer(e.target.value)
                 setIsError(false)
               }}
+              onKeyUp={(e) => {
+                if (e.code === 'Enter') {
+                  handleSubmit()
+                }
+              }}
             />
             <div>--</div>
             <FaLongArrowAltRight
@@ -362,7 +374,6 @@ export default function PlayOneOne() {
           <Flex className="gap-6 mt-10">
             <Button
               className="w-full"
-              type="primary"
               disabled={!player1CountDown.isRunning}
               onClick={() =>
                 sendMessage({
@@ -375,7 +386,7 @@ export default function PlayOneOne() {
             <Button
               onClick={handleSubmit}
               className="w-full"
-              type="default"
+              type="primary"
               disabled={!player1CountDown.isRunning}
             >
               Submit
