@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { ReactNode } from 'react'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { FaRegUser } from 'react-icons/fa'
 import { FaRankingStar } from 'react-icons/fa6'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '~/store'
@@ -96,11 +95,11 @@ export default function PrivateClientLayout({ children }: { children: ReactNode 
           >
             <div className="flex items-center gap-1 h-[41px]">
               <p className="text-white">{userInfo?.email}</p>
-              {!userInfo?.avatar ? (
-                <FaRegUser color="#fff" size="16px" />
-              ) : (
-                <Avatar size={'default'} src={`${userInfo?.avatar}`} />
-              )}
+
+              <Avatar
+                size={'default'}
+                src={`${userInfo?.avatar ?? '/images/avatar-default.png'}`}
+              />
             </div>
           </Popover>
         </div>

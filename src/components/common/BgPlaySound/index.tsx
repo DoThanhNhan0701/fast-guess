@@ -21,8 +21,6 @@ export default function BgPlaySound() {
     }
   }, [isPlay])
 
-  console.log(mute)
-
   return (
     <audio
       muted={mute}

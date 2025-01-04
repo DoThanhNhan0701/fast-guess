@@ -8,6 +8,7 @@ import { endpointBase } from '~/services/endpoint'
 import { getRequest } from '~/services/request'
 import { REFRESH_TOKEN } from '~/settings/constants'
 import { RootState } from '~/store'
+import { actionChangeMute } from '~/store/slice/app'
 import { actionLogout, actionUpdate } from '~/store/slice/auth'
 
 import webStorageClient from '~/utils/webStorageClient'
@@ -30,6 +31,11 @@ export default function App({ children }: { children: ReactNode }) {
       setReady(true)
     }
   }, [router, userInfo, dispatch])
+
+  useEffect(() => {
+    const isMute = localStorage.getItem('_mute') === 'true'
+    dispatch(actionChangeMute(isMute))
+  }, [])
 
   const getMe = async () => {
     try {

@@ -1,10 +1,10 @@
 import { HomeOutlined } from '@ant-design/icons'
-import { Col, Flex, Image, message, Popover, Row } from 'antd'
-import { usePathname } from 'next/navigation'
+import { Col, Flex, Image, message, Popover, Row, Modal as ModalAnt } from 'antd'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { BsThreeDotsVertical } from 'react-icons/bs'
 import { endpointBase } from '~/services/endpoint'
-import { getRequest } from '~/services/request'
+import { deleteRequest, getRequest, updateRequest } from '~/services/request'
 
 import Button from '~/components/common/Button'
 import Content from '~/components/common/Content'
@@ -21,6 +21,7 @@ interface Detail {
 interface ListImage {
   image: string
   name: string
+  id: string
 }
 
 export default function DetaiTopic() {
@@ -31,10 +32,15 @@ export default function DetaiTopic() {
     name: '',
     src: '',
   })
+  const router = useRouter()
 
   const [listImage, setListImage] = useState<ListImage[]>([])
 
   useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
     getRequest(`${endpointBase.QUESTION}`, {
       params: {
         topic: `${pathName?.split('/')[2]}`,
@@ -44,7 +50,46 @@ export default function DetaiTopic() {
         setListImage(res || [])
       })
       .catch(() => {})
-  }, [])
+  }
+
+  const handleUpdate = async () => {
+    try {
+      const formData = new FormData()
+      formData.append('name', detail.name)
+      await updateRequest(
+        `${endpointBase.QUESTION}${detail.id}/`,
+        {
+          data: formData,
+        },
+        true,
+      )
+
+      message.success('Image updated')
+      fetchData()
+      closeModal()
+    } catch (error) {
+      message.error('Update failed')
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    ModalAnt.confirm({
+      title: 'Are you sure you want to delete this Image?',
+      content: 'This action cannot be undo.',
+      okText: 'Yes, Delete',
+      cancelText: 'Cancel',
+      onOk: () => {
+        deleteRequest(`${endpointBase.QUESTION}${id}/`)
+          .then(() => {
+            message.success('Topic deleted successfully')
+            fetchData()
+          })
+          .catch(() => {
+            message.error('Failed to delete topic')
+          })
+      },
+    })
+  }
 
   return (
     <>
@@ -97,11 +142,7 @@ export default function DetaiTopic() {
           >
             Cancel
           </Button>
-          <Button
-            onClick={() => message.success('Update successfully')}
-            className="w-full"
-            type="primary"
-          >
+          <Button onClick={handleUpdate} className="w-full" type="primary">
             Update
           </Button>
         </Flex>
@@ -112,6 +153,7 @@ export default function DetaiTopic() {
         breadcrumb={[
           {
             title: <HomeOutlined />,
+            onClick: () => router.push('/home'),
           },
           {
             title: 'Setting',
@@ -129,12 +171,17 @@ export default function DetaiTopic() {
                   rootClassName="[&_.ant-popover-inner]:!p-0 z-10"
                   content={
                     <div className="cursor-pointer">
-                      <p className="py-2 px-4 hover:bg-slate-50">Delete</p>
+                      <p
+                        className="py-2 px-4 hover:bg-slate-50"
+                        onClick={() => handleDelete(ite.id)}
+                      >
+                        Delete
+                      </p>
                       <p
                         className="py-2 px-4 hover:bg-slate-50"
                         onClick={() => {
                           setDetail({
-                            id: `${inx}`,
+                            id: ite.id,
                             name: ite.name,
                             src: ite.image,
                           })

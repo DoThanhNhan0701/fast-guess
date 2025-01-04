@@ -6,7 +6,6 @@ import Image from 'next/image'
 import { ReactNode, useState } from 'react'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { FaRegUser } from 'react-icons/fa'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '~/store'
 import { actionLogout } from '~/store/slice/auth'
@@ -99,11 +98,11 @@ export default function PrivateCmsLayout({ children }: { children: ReactNode }) 
               >
                 <div className="flex items-center gap-1 h-[41px]">
                   <p className="text-black">{userInfo?.email}</p>
-                  {!userInfo?.avatar ? (
-                    <FaRegUser color="#fff" size="16px" />
-                  ) : (
-                    <Avatar size={'default'} src={`${userInfo?.avatar}`} />
-                  )}
+
+                  <Avatar
+                    size={'default'}
+                    src={`${userInfo?.avatar ?? '/images/avatar-default.png'}`}
+                  />
                 </div>
               </Popover>
             </div>

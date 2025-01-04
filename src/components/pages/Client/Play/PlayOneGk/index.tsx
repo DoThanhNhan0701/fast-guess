@@ -21,6 +21,8 @@ import { endpointBase } from '~/services/endpoint'
 import { actionPlaySound } from '~/store/slice/app'
 import BgPlaySound from '~/components/common/BgPlaySound'
 import NextTopic from '../_component/NextTopic'
+import webStorageClient from '~/utils/webStorageClient'
+import { ACCESS_TOKEN } from '~/settings/constants'
 
 export default function PlayOneGk() {
   const router = useRouter()
@@ -214,7 +216,7 @@ export default function PlayOneGk() {
 
   const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${
     new URL(domainSocket ?? '').host
-  }/ws/game/${roomID}/?token=${accessToken}`
+  }/ws/game/${roomID}/?token=${webStorageClient.get(ACCESS_TOKEN)}`
 
   const { sendMessage } = useWebSocket(
     // `ws://${new URL(domainSocket ?? '').host}/ws/game/${roomID}/?token=${accessToken}`,
@@ -290,12 +292,9 @@ export default function PlayOneGk() {
 
   const getAvatarUser = (userName: string | null, role: 'user1' | 'user2' | 'examiner') => {
     const avatarDefaults = {
-      user1:
-        'https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg',
-      user2:
-        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDso3YjdjeD_8tA6vVacoI3ogd6YqF-VfyGiylBV2v6-zitJretXOtsLvJ5UZDrlNs7nc&usqp=CAU',
-      examiner:
-        'https://static.vecteezy.com/system/resources/thumbnails/000/439/863/small/Basic_Ui__28186_29.jpg',
+      user1: '/images/avatar-default.png',
+      user2: '/images/avatar-default.png',
+      examiner: '/images/avatar-default.png',
     }
 
     const avatar = userAvatarMapping[userName ?? '']
@@ -312,6 +311,7 @@ export default function PlayOneGk() {
       breadcrumb={[
         {
           title: <HomeOutlined />,
+          onClick: () => router.push('/home'),
         },
         {
           title: 'Play One One and Gk',
